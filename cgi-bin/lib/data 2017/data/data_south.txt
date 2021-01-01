@@ -1,0 +1,16 @@
+1,N Carolina
+16,Texas South
+8,Arkansas
+9,Seton Hall
+5,Minnesota
+12,MTSU 
+4,Butler
+13,Winthrop
+6,Cincinnati
+11,KSU
+3,UCLA
+14,Kent St.
+7,Dayton
+10,Wichita St.
+2,Kentucky
+15,N Kentucky

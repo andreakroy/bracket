@@ -1,0 +1,16 @@
+1,West
+16,West
+8,West
+9,West
+5,West
+12,West
+4,West
+13,West
+6,West
+11,West
+3,West
+14,West
+7,West
+10,West
+2,West
+15,West

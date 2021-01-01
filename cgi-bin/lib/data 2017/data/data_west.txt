@@ -1,0 +1,16 @@
+1,Gonzaga
+16,SDSU
+8,Northwestern
+9,Vanderbilt
+5,Notre Dame
+12,Princeton
+4,W Virginia
+13,Bucknell
+6,Maryland
+11,Xavier
+3,Florida St.
+14,FGCU
+7,St. Mary's
+10,VCU
+2,Arizona
+15,N Dakota

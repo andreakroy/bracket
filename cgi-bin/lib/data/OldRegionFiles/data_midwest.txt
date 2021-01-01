@@ -1,0 +1,16 @@
+1,Midwest
+16,Midwest
+8,Midwest
+9,Midwest
+5,Midwest
+12,Midwest
+4,Midwest
+13,Midwest
+6,Midwest
+11,Midwest
+3,Midwest
+14,Midwest
+7,Midwest
+10,Midwest
+2,Midwest
+15,Midwest

@@ -1,0 +1,16 @@
+1,Wisconsin
+16,Coast Car.
+8,Oregon
+9,Oklahoma St
+5,Arkansas
+12,Wofford
+4,UNC
+13,Harvard
+6,Xavier
+11,Ole Miss
+3,Baylor
+14,Georgia St
+7,VCU
+10,Ohio St
+2,Arizona
+15,Texas SO
