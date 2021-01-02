@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from teams import getTeams
+from region import Region, Regions
+from match import Match
+from team import Team
 from alpha import getAlphaFile, getDefaultAlphas
-from itertools import izip
+from more_itertools import pairwise
+from enum import Enum
 import random, time, datetime, binascii, os
 
 # From 2018:
@@ -39,150 +42,70 @@ R5 = "11"
 R6 = "1"
 PERFECTBITSTRING = "1" + R1 + R2 + R3 + R4 + R5 + R6
 
-# MATCH OBJECT: REPRESENTS ONE GAME BETWEEN TWO TEAMS
-class Match(object):
-    def __init__(self, value, child1, child2):
-        # value - winner, Team object
-        # child1, child2 - competitors, 2 Match objects
-        self.validate(value, child1, child2)
-
-        self.child1 = child1
-        self.child2 = child2
-        self.value = value
-
-    # ERROR CHECKING METHOD - ALWAYS CALL BEFORE SETTING INSTANCE VARIABLES
-    def validate(self, value, child1, child2):
-        if value is not None: # allow undecided matches
-            if (child1 is None) != (child2 is None): # xor
-                raise ValueError("When setting the value, only both or neither children can be None.")
-            if (child1 is not None) or (child2 is not None): # allow first-round Nodes with a value but no children
-                if (value != child1.getValue() and value != child2.getValue()):
-                    raise ValueError("Only child1, child2, and None can be valid values.")
-    
-    def setValue(self, value):
-        self.validate(value, self.child1, self.child2)
-        self.value = value
-
-    def setChild1(self, child1):
-        self.validate(value, child1, self.child2)
-        self.child1 = child1
-
-    def setChild2(self, child2):
-        self.validate(value, self.child1, child2)
-        self.child2 = child2
-
-    def getValue(self):
-        return self.value
-    def getWinner(self):
-        return self.value
-    def getChild1(self):
-        return self.child1
-    def getChild2(self):
-        return self.child2
-
-    def getTeams(self):
-        return (self.child1.getValue(), self.child2.getValue())
-    
-    def getLoser(self): # return team object of loser
-        if self.child1 is None or self.child2 is None:
-            return None
-        if self.child1.getValue() == self.value:
-            return self.child2.getValue()
-        if self.child2.getValue() == self.value:
-            return self.child1.getValue()
-        raise ValueError("Something is wrong with this match.")
-    
-    def __str__(self):
-        if self.value is None: # no winner declared
-            if self.child1 is None and self.child2 is None: # empty match
-                return ""
-            else: # undecided match
-                return self.child1.getValue().__str__() + " vs " + self.child2.getValue().__str__()
-        else:
-            if self.child1 is None and self.child2 is None: # team == match, used for first round match child
-                return ""
-            else: # decided match
-                if self.child1.getValue() == self.value:
-                    return self.child1.getValue().__str__() + " defeated " + self.child2.getValue().__str__()
-                else:
-                    return self.child2.getValue().__str__() + " defeated " + self.child1.getValue().__str__()
 
 
-# FUNCTION FOR PAIRWISE ITERATION THROUGH A LIST
-def pairwise(iterable):
-    # "s -> (s0,s1), (s2,s3), (s4, s5), ..."
-    a = iter(iterable)
-    return izip(a, a)
+matchorder = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
+path = os.path.dirname(os.path.realpath(__file__)) + "/"
 
-matchorder = [1,16,8,9,5,12,4,13,6,11,3,14,7,10,2,15]
+file_map = { Regions.EAST: path + "data/data_e.csv",
+            Regions.WEST: path + "data/data_w.csv",
+            Regions.SOUTH: + path + "data/data_s.csv",
+            Regions.MIDWEST: path+"data/data_mw.csv"
+        }
 
-# BRACKET OBJECT: REPRESENTS 64-TEAM BRACKET DIVIDED INTO 4 REGIONS
 class Bracket(object):
-    def __init__(self, teams):
-        # teams - array of dicts as specified in teams.py
+    '''
+    Defines a tournament bracket.
+    '''
+    class Rounds(Enum):
+        '''
+        Defines the 6 Rounds in the tournament.
+        '''
+        ROUND_OF_64 = 1, 
+        ROUND_OF_32 = 2,
+        SWEET_16 = 3, 
+        ELITE_8 = 4,
+        FINAL_4 = 5,
+        CHAMPIONSHIP = 6
 
-        self.matches = []
+    def __init__(self):
+        self.regions = {
+            Regions.EAST: Region(file_map[Regions.EAST], Regions.EAST), 
+            Regions.WEST: Region(file_map[Regions.WEST], Regions.WEST),
+            Regions.MIDWEST: Region(file_map[Regions.MIDWEST], Regions.MIDWEST),
+            Regions.SOUTH: Region(file_map[Regions.SOUTH], Regions.SOUTH)
+        }
+        # each round is mapped to an integer:
+        # Round of 64 = 1, Round of 32 = 2, Sweet 16 = 3, 
+        # Elite 8 = 4, Final Four = 5, Championship Game = 6
+        self.rounds = {}
 
-        # round of 64
-        thisround = []
-        for region in teams:
-            for seed1, seed2 in pairwise(matchorder):
-                m1 = Match(region[str(seed1)],None,None)
-                m2 = Match(region[str(seed2)],None,None)
-                thisround.append(Match(None,m1,m2))
-        self.matches.append(thisround)
+        def match(round_num: int):
+            if round_num == self.Rounds.ROUND_OF_64.value:
+                thisround = []
+                for region in self.regions.values():
+                    for seed1, seed2 in pairwise(matchorder):
+                        thisround.append(Match(region.teams[seed1], region.teams[seed2]))
+                self.rounds[round_num] = thisround
+            elif round_num < self.Rounds.CHAMPIONSHIP.value:
+                thisround = []
+                for region in self.regions.values():
+                    for match1, match2 in pairwise(self.rounds[round_num - 1]):
+                        thisround.append(Match(match1.winner(), match2.winner()))
+                self.rounds[round_num] = thisround
+                match(round_num + 1)
+            else:
+                return
 
-        # round of 32
-        thisround = []
-        for match1, match2 in pairwise(self.matches[0]):
-            thisround.append(Match(None,match1,match2))
-        self.matches.append(thisround)
-
-        # round of 16
-        thisround = []
-        for match1, match2 in pairwise(self.matches[1]):
-            thisround.append(Match(None,match1,match2))
-        self.matches.append(thisround)
-
-        # round of 8 - quarterfinals
-        thisround = []
-        for match1, match2 in pairwise(self.matches[2]):
-            thisround.append(Match(None,match1,match2))
-        self.matches.append(thisround)
-
-        # round of 4 - semifinals
-        thisround = []
-        for match1, match2 in pairwise(self.matches[3]):
-            thisround.append(Match(None,match1,match2))
-        self.matches.append(thisround)
-
-        # round of 2 - championship game
-        thisround = []
-        for match1, match2 in pairwise(self.matches[4]):
-            thisround.append(Match(None,match1,match2))
-        self.matches.append(thisround)
-
-    def getMatches(self):
-        return self.matches
+            # recursively match all teams
+            match(self.Rounds.ROUND_OF_64.value)
 
     def getBitRepresentation(self): # for storage in database
         result = "1" # force every bit to appear
-        for rnd in self.matches:
+        for rnd in self.rounds.values():
             for match in rnd:
-                result += str(int(match.getTeams().index(match.getValue())))
+                result += str(match.state)
         return int(result,2) # resulting bitstring is 64-bits long, including leading bit
-    
-    def __str__(self):
-        result = ""
-        rndnum = 2
-        for rnd in self.matches:
-            result += ("Round " + str(rndnum) + "\n")
-            for match in rnd:
-                result += (match.__str__() + "\n")
-            rndnum += 1
-            result += "\n"
-        return result
-
 
 # PROBABILITY FUNCTIONS
 def win(team1, team2, rndnum):

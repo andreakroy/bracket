@@ -30,21 +30,3 @@ class Team:
         Returns a str representation of a Team object.
         '''
         return f'[{self.seed}] ' + self.name
-
-path = os.path.dirname(os.path.realpath(__file__)) + "/"
-
-'''
-The file paths for the four regions with 16 teams each.
-Data files are csv of teams
-
-Specifications:
-First sixteen teams - South
-Second sixteen teams - East
-Third sixteen teams - Midwest
-Fourth sixteen teams - West
-Within each region: 1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15
-'''
-files = [path + "data/data_UL.txt",
-         path + "data/data_LL.txt",
-         path + "data/data_LR.txt",
-         path + "data/data_UR.txt"]
