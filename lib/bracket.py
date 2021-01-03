@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from region import Region, Regions
-from match import Match
-from team import Team
-from alpha import getAlphaFile, getDefaultAlphas
+from .region import Region, Regions
+from .match import Match
+from .team import Team
+from .alpha import getAlphaFile, getDefaultAlphas
 from more_itertools import pairwise
 from enum import Enum
 import random, time, datetime, binascii, os
@@ -47,10 +47,10 @@ PERFECTBITSTRING = "1" + R1 + R2 + R3 + R4 + R5 + R6
 matchorder = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
 path = os.path.dirname(os.path.realpath(__file__)) + "/"
 
-file_map = { Regions.EAST: path + "data/data_e.csv",
-            Regions.WEST: path + "data/data_w.csv",
-            Regions.SOUTH: + path + "data/data_s.csv",
-            Regions.MIDWEST: path+"data/data_mw.csv"
+file_map = { Regions.EAST: path + "data/data_east.csv",
+            Regions.WEST: path + "data/data_west.csv",
+            Regions.SOUTH: path + "data/data_south.csv",
+            Regions.MIDWEST: path+"data/data_midwest.csv"
         }
 
 class Bracket(object):
@@ -99,13 +99,6 @@ class Bracket(object):
 
             # recursively match all teams
             match(self.Rounds.ROUND_OF_64.value)
-
-    def getBitRepresentation(self): # for storage in database
-        result = "1" # force every bit to appear
-        for rnd in self.rounds.values():
-            for match in rnd:
-                result += str(match.state)
-        return int(result,2) # resulting bitstring is 64-bits long, including leading bit
 
 # PROBABILITY FUNCTIONS
 def win(team1, team2, rndnum):

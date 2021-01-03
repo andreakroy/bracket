@@ -1,75 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from lib.bracket import *
-from lib.teams import getTeams
+from .bracket import Bracket, determineWinners
+from .team import Team
 import os
-# import MySQLdb
-import mysql.connector as dbconnect
-
-TABLE = "bracketo_marchmadness"
-
-def connect():
-    return dbconnect.connect(host="localhost",
-                           user="bracketo_client",
-                           passwd="M@rchM@dn355",
-                           db="bracketo_marchmadness")
-# Was previously: host="localhost", but troubleshooting internal server error
-# Years ago, it was: host="engr-cpanel-mysql.engr.illinois.edu"
-
-def insert(timestamp, uniqueID, binary):
-    db = connect()
-    cur = db.cursor()
-    command = ("INSERT INTO {0}.Bracket "
-              "(timestamp, id, bitstring) "
-              "VALUES (\"{1}\",\"{2}\",{3})".format(TABLE, timestamp, uniqueID, binary))
-
-    try:
-        cur.execute(command)
-        db.commit()
-    except dbconnect.Error as e:
-        db.rollback()
-        raise e
-    finally:
-        db.close()
-        cur.close()
-
-
-def select(uniqueID):
-    # returns tuple: (timestamp, binary)
-    db = connect()
-    cur = db.cursor()
-    command = ("SELECT timestamp, bitstring FROM {0}.Bracket "
-               "WHERE id=\"{1}\"".format(TABLE, uniqueID))
-    cur.execute(command)
-    rows = cur.fetchall()
-    db.close()
-    cur.close()
-    return rows[0]
-
-
-def isValidID(ID):
-    # Valid IDs are:
-    # 1. Made of only hex chars.
-    # 2. Exactly 16 chars long.
-    # 3. Str type.
-    if len(ID) == 16:
-        try:
-            int(ID, 16)
-            return True
-        except ValueError:
-            return False
-    else:
-        return False
-
 import json
 
 def generateJSON(uniqueID=None):
     # returns an HTML string
 
     mustGenerateNewBracket = uniqueID is None
-    teams = getTeams()
-    b = Bracket(teams)
+    b = Bracket()
     if mustGenerateNewBracket:
         bitstring = None
         determineWinners(b, bitstring)

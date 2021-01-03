@@ -1,27 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-
+import csv
 import os
-path = os.path.dirname(os.path.realpath(__file__)) + "/"
 
-def getAlphaFile(rndnum):
+path = os.path.dirname(os.path.realpath(__file__)) + '/'
+
+def get_alphas(rndnum) -> dict:
     alphas = {}
-    with open(path + "data/alpha" + str(rndnum) + ".txt", "r") as data:
-        for line in data:
-            line = line.strip()
-            l = line.split(",")
-            l[:] = [float(s) for s in l]
-            l[0], l[1] = int(l[0]), int(l[1])
-            alphas[tuple(l[:-1])] = l[-1]
+    with open(path + 'data/alpha' + str(rndnum) + '.csv', 'r') as data:
+        reader = csv.reader(data)
+        for line in reader:
+            alphas[set((line[0], line[1]))] = line[2]
     return alphas
 
-def getDefaultAlphas():
-    defaults = {}
-    with open(path + "data/alpha_defaults.txt", "r") as data:
-        for line in data:
-            line = line.strip()
-            l = line.split(",")
-            l[:] = [float(s) for s in l]
-            l[0] = int(l[0])
-            defaults[l[0]] = l[1]
-    return defaults
+def get_default_alphas() -> dict:
+    alphas = {}
+    with open(path + 'data/alpha_defaults.csv', 'r') as data:
+        reader = csv.reader(data)
+        for line in reader:
+            alphas[set((line[0], line[1]))] = line[2]
+    return alphas

@@ -1,6 +1,6 @@
 from csv import reader
 from enum import Enum
-from team import Team
+from .team import Team
 
 class Regions(Enum):
     '''
