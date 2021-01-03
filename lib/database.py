@@ -5,7 +5,7 @@ from .tourney import Bracket
 import os
 import json
 
-def generateJSON(uniqueID=None):
+def generateJSON(uniqueID=None, samplingFunction=None):
     # returns an HTML string
 
     b = Bracket()
