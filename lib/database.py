@@ -9,4 +9,4 @@ def generateJSON(uniqueID=None):
     # returns an HTML string
 
     b = Bracket()
-    print(b.winner)
+    return json.dumps(b.to_json())

@@ -1,5 +1,6 @@
-from .match import Match
-from .team import Team
-from .region import Region, Regions
-from .round import Round
-from .alpha import Alpha, DefaultAlpha
+from .alpha import *
+from .match import *
+from .region import *
+from .round import *
+from .team import *
+from .utils import *
