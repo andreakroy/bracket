@@ -1,4 +1,4 @@
-#from lib.bracket.round import Rounds
+from round import Rounds
 import random
 
 class Sample:
@@ -6,8 +6,8 @@ class Sample:
     Initializes
     '''
     def __init__(self):
-        round_counts = { round: [] for round in Rounds }
-        observed_counts = [57,29,17,13,7,3,3,5,1,1,4] # Observed counts of Final Four Appearances
+        self.round_counts = { round: [] for round in Rounds }
+        self.observed_counts = [57,29,17,13,7,3,3,5,1,1,4,0,0,0,0,0] # Observed counts of Final Four Appearances
 
 
     '''
@@ -49,18 +49,34 @@ class F4_A(Sample):
     name (str) - the team's name.
     '''
     def __init__(self):
-        pmf = Sample.round_counts[Rounds.FINAL_4]
+        Sample.__init__(self)
+        self.get_pmf()
+        self.pmf = self.round_counts[Rounds.FINAL_4]
+        self.cdf = []
 
     def get_seeds(self):
         seeds = []
+        total = 0
+
+        for i in range(len(self.pmf)):
+            total += self.pmf[i]
+            self.cdf.append(total)
+            
+
         for i in range(4):
             r = random.random()
             absolute_difference_function = lambda list_value : abs(list_value - r)
 
             closest_value = min(self.pmf, key=absolute_difference_function)
-            seeds.append(closest_value)
+            ind = self.pmf.index(closest_value)
+            seeds.append(ind + 1)
         return seeds
 
+if __name__ == "__main__":
+    #y = Sample()
+    #print(y.run())
+    x = F4_A()
+    print(x.get_seeds())
 '''
 class E_8(Sample):
     
