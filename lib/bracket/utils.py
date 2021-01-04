@@ -25,5 +25,11 @@ base_alpha_path = lambda rnd: path + 'data/alpha' + str(rnd.value) + '.csv'
 data_files = [path + 'data/data_east.csv',
             path + 'data/data_west.csv',
             path + 'data/data_south.csv',
-            path+ 'data/data_midwest.csv'
+            path + 'data/data_midwest.csv'
+]
+
+# File paths to the round appearance data for all 16 seeds.
+sample_data_files = [path + 'bracket/sample/data/round4.csv',
+            path + 'bracket/sample/data/round5.csv',
+            path + 'bracket/sample/data/round6.csv'
 ]

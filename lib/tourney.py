@@ -6,7 +6,7 @@ from .bracket.utils import pairwise
 from enum import Enum
 import json, os, random
 
-class Bracket(object):
+class Bracket(object, samplingFunction):
     '''
     Defines a tournament bracket.
     '''

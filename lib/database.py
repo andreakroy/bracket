@@ -8,5 +8,5 @@ import json
 def generateJSON(uniqueID=None, samplingFunction=None):
     # returns an HTML string
 
-    b = Bracket()
+    b = Bracket(samplingFunction)
     return json.dumps(b.to_json())
