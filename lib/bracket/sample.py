@@ -8,13 +8,11 @@ class Sample:
     '''
     Initializes
     '''
-    def __init__(self, rnd: int):
+    def __init__(self, rnd: Rounds):
         self.rnd = rnd 
         self.pmf = [] # Probability mass function for each seed reaching a given round
         self.rng = np.random.default_rng()
         
-
-                
         self.calculate_pmf()
 
     def __call__(self):
@@ -65,7 +63,6 @@ class F4_A(Sample):
     '''
     def __init__(self):
         Sample.__init__(self, 5) # Round 5 (Final Four)
-
 
     def __call__(self):
         seeds = []
