@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from .bracket import *
-from .bracket.utils import pairwise
+from .sample import Sample
+from .utils import *
 from enum import Enum
 import json, os, random
+from .team import Team
+from .alpha import *
+from .region import *
 
-class Bracket(object, samplingFunction):
+class Bracket:
     '''
     Defines a tournament bracket.
     '''
-    def __init__(self):
+    def __init__(self, samplingFunction: Sample):
         self.af = alpha_fn(Alpha(base_alpha_path), DefaultAlpha(default_alpha_path))
         self.regions = (Region(data_files[0], Regions.MIDWEST, self.af), 
             Region(data_files[1], Regions.WEST, self.af),

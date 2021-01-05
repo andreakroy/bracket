@@ -28,7 +28,7 @@ class Region:
     winner (Team) : stores the winning Team in the region (AKA the winner of the Elite Eight Matchup
         in a particular region).
     '''
-    def __init__(self, file_path: str, region: Regions, alpha_fn: callable):
+    def __init__(self, file_path: str, region: Regions, alpha_fn: callable, survivors: dict=None):
         '''
         Constructs a Region object.
 
