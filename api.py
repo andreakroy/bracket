@@ -3,5 +3,7 @@
 
 import cgi
 from lib.database import generateJSON
+from lib.bracket.sample import *
 
-print(generateJSON())
+x = F4_A()
+print(x())

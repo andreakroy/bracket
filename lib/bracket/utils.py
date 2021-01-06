@@ -16,14 +16,17 @@ matchorder = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
 path = dirname(dirname(realpath(__file__))) + "/"
 
 # Function which returns the default alpha file path.
-default_alpha_path = lambda: path + 'data/alpha_defaults.csv'
+default_alpha_path = lambda: path + 'data/alpha/alpha_defaults.csv'
 
 # Function which given a round, returns the alpha file path for that round.
-base_alpha_path = lambda rnd: path + 'data/alpha' + str(rnd.value) + '.csv'
+base_alpha_path = lambda rnd: path + 'data/alpha/alpha' + str(rnd.value) + '.csv'
 
 # File paths to the matchup data for the four regions.
-data_files = [path + 'data/data_east.csv',
-            path + 'data/data_west.csv',
-            path + 'data/data_south.csv',
-            path+ 'data/data_midwest.csv'
+data_files = [path + 'data/matchup/data_east.csv',
+            path + 'data/matchup/data_west.csv',
+            path + 'data/matchup/data_south.csv',
+            path + 'data/matchup/data_midwest.csv'
 ]
+
+# File paths to the round appearance data for all 16 seeds.
+sample_base_path = path + 'data/sample/round'

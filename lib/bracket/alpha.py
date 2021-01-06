@@ -49,7 +49,7 @@ class Alpha:
         path_fn (callable) : a function which takes in a Rounds enum values and returns the name of 
             the file path of the alpha values file for that particular round.
         '''
-        self.alphas = {}
+        self.alphas = {} # Each round is a dictionary that maps two seeds onto their alpha values
         for rnd in Rounds:
             self.alphas[rnd] = {}
             with open(path_fn(rnd), 'r') as data:

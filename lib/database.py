@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from .tourney import Bracket
+from lib.bracket import bracket
 import os
 import json
+from .bracket.sample import F4_A, E_8
 
-def generateJSON(uniqueID=None):
+def generateJSON(uniqueID=None, samplingFunction=None):
     # returns an HTML string
 
-    b = Bracket()
+    b = bracket.Bracket(samplingFunction)
     return json.dumps(b.to_json())
