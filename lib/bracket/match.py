@@ -49,6 +49,12 @@ class Match():
         '''
         rand = random.random() 
         return self.t1 if rand < self.prob else self.t2
+
+    def bits(self) -> bool:
+        '''
+        Return 0 if Team 1 wins, else return 1.
+        '''
+        return 0 if self.winner == self.t1 else 1
         
     def to_json(self) -> str:
         '''

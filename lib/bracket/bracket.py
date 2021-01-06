@@ -15,43 +15,65 @@ class Bracket:
     '''
     Defines a tournament bracket.
     '''
-    def __init__(self, samplingFunction: Sample):
+    def __init__(self, samplingFunction: Sample=None):
         self.af = alpha_fn(Alpha(base_alpha_path), DefaultAlpha(default_alpha_path))
+        # Order is important. MIDWEST is paired with WEST and EAST is paired with SOUTH
+        # when iterating pairwise over the regions tuple.
         self.regions = (Region(data_files[0], Regions.MIDWEST, self.af), 
             Region(data_files[1], Regions.WEST, self.af),
             Region(data_files[2], Regions.EAST, self.af), 
             Region(data_files[3], Regions.SOUTH, self.af)
         )
-        self.rounds = { rnd: [] for rnd in Rounds }
+        self.rounds = { Rounds.FINAL_4: [], Rounds.CHAMPIONSHIP: [] }
         self.winner = self.run()
+        self.match_list = self.matches()
 
     def run(self) -> Team:
-        # Rounds 1 - 4
-        for region in self.regions:
-            rnd = Rounds.ROUND_OF_64
-            while rnd.value < Rounds.FINAL_4.value:
-                self.rounds[rnd].extend(region.rounds[rnd])
-                rnd = Rounds(rnd.value + 1)
-        
-        # Rounds 5 (Final 4)
+        # Rounds 1 - 4 handled in each region.
+        # Round 5 (Final 4)
         for pair in pairwise(self.regions):
             self.rounds[Rounds.FINAL_4].append(Match(pair[0].winner, pair[1].winner, 
                 Rounds.FINAL_4, self.af))
-        
-        
-        # Rounds 6 (Championship)
+        # Round 6 (Championship)
         self.rounds[Rounds.CHAMPIONSHIP].append(
             Match(self.rounds[Rounds.FINAL_4][0].winner, self.rounds[Rounds.FINAL_4][1].winner,
                 Rounds.CHAMPIONSHIP, self.af))
+        return self.rounds[Rounds.CHAMPIONSHIP].pop().winner
+    
+    def bits(self) -> str:
+        '''
+        Return a bitstring representing the bracket.
+        '''
+        out = ['0'] * 64
 
-        return self.rounds[Rounds.CHAMPIONSHIP][0].winner
+        for i in range(len(self.match_list)):
+            out[i] = str(self.match_list[i].bits())
+        return ''.join(out)
+
+    def matches(self) -> list:
+        '''
+        Return an ordered list of all matches played in a bracket.
+        '''
+        # The first four rounds handled inside each region.
+        regional_rounds = range(1, 5)
+        # The last two rounds played across regions.
+        final_rounds = range(5, 7)
+        out = []
+        for rnd_num in regional_rounds:
+            for region in self.regions:
+                for match in region.rounds[Rounds(rnd_num)]:
+                    out.append(match)
+        for rnd in final_rounds:
+            for match in self.rounds[Rounds(rnd)]:
+                out.append(match)
+        return out
 
     def to_json(self):
         '''
         Returns a json serializeable dict representation of a Bracket.
         '''
         d = {
-            'winner': self.winner.to_json()
+            'bitstring': self.bits(),
+            'matches' : [match.to_json() for match in self.matches()]
         }
-        d.update({ rnd.value: [match.to_json() for match in self.rounds[rnd]] for rnd in self.rounds})
         return d
