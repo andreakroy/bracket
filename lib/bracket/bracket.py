@@ -2,12 +2,14 @@
 # -*- coding: UTF-8 -*-
 
 from .sample import Sample
-from .utils import *
 from enum import Enum
 import json, os, random
-from .team import Team
 from .alpha import *
-from .region import *
+from .match import Match
+from .team import Team
+from.region import Region, Regions
+from .round import Rounds
+from .utils import *
 
 class Bracket:
     '''

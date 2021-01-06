@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from .round import Rounds
 from .utils import *
 import csv
 
@@ -10,17 +11,17 @@ class Sample:
 
     Attributes
     ----------
-    rnd (int) : The round [1, 6] for which the sampling function is used.
+    rnd (Rounds) : The round enum valyue for which the sampling function is used.
     pmf (int) : The Probability Mass Function for each seed reaching a given round.
     rng (np.random.Generator) : A random number generator.
     '''
-    def __init__(self, rnd: int):
+    def __init__(self, rnd: Rounds):
         '''
         Constructs a Sample for a given round.
 
         Parameters
         ----------
-        rnd (int) : the round for which the Sample is used.
+        rnd (Rounds) : the round for which the Sample is used.
         '''
         self.rnd = rnd 
         self.rng = np.random.default_rng()
@@ -38,7 +39,7 @@ class Sample:
         '''
         # observed counts of Final Four appearances for each team.
         observed_counts = [] 
-        file_path = sample_base_path + str(self.rnd) + '.csv'
+        file_path = sample_base_path + str(self.rnd.value) + '.csv'
 
         # extract all teams from the data file.
         with open(file_path, 'r') as f:
@@ -68,7 +69,7 @@ class F4_A(Sample):
         '''
         Constructs an F4_A Sample.
         '''
-        Sample.__init__(self, 5) # Round 5 (Final Four)
+        Sample.__init__(self, Rounds.FINAL_4)
 
     def __call__(self):
         '''
@@ -91,8 +92,7 @@ class E_8(Sample):
         '''
         Constructs an E_8 Sample.
         '''
-        Sample.__init__(self, 4) # Round 4 (Elite Eight)
-
+        Sample.__init__(self, Rounds.ELITE_8)
     def __call__(self):
         '''
         Returns 8 seeds for the Elite 8.
