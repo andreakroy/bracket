@@ -9,5 +9,5 @@ from .bracket.sample import F4_A, E_8
 def generateJSON(uniqueID=None, samplingFunction=None):
     # returns an HTML string
 
-    b = bracket.Bracket()
+    b = bracket.Bracket(samplingFunction)
     return b.to_json()

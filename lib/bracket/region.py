@@ -11,9 +11,9 @@ class Regions(Enum):
     '''
     Enum defining the four regions in the tournament.
     '''
-    WEST = 0
-    EAST = 1
-    MIDWEST = 2
+    MIDWEST = 0
+    WEST = 1
+    EAST = 2
     SOUTH = 3
 
 class Region:
@@ -53,14 +53,17 @@ class Region:
             for seed, name in csv_reader:
                 s = int(seed)
                 self.teams[s] = Team(s, name)
-        
+
         # initialize known first round matchups.
         for s1, s2 in pairwise(matchorder):
-            self.rounds[Rounds.ROUND_OF_64].append(Match(self.teams[s1], 
-                self.teams[s2], Rounds.ROUND_OF_64, self.alpha_fn))
-        
+            
+            self.rounds[Rounds.ROUND_OF_64].append(Match(self.teams[s1], self.teams[s2],
+                Rounds.ROUND_OF_64, self.alpha_fn, self.get_winner(self.teams[s1], self.teams[s2])))
+                
         # run this region of the bracket and calculate the winner.
         self.winner = self.run()
+        print(self.sample_seeds)
+        print(self.winner.seed)
 
     def run(self) -> Team:
         '''
@@ -74,15 +77,18 @@ class Region:
             for m1, m2 in pairwise(self.rounds[Rounds(rnd.value - 1)]):
                 t1 = m1.winner
                 t2 = m2.winner
-                winner = None
-                if rnd.value <= self.sample_round:
-                    if t1 in self.sample_seeds:
-                        winner = t1
-                    elif t2 in self.sample_seeds:
-                        winner = t2
-                self.rounds[rnd].append(Match(t1, t2, rnd, winner, self.alpha_fn))
-                
+                winner = self.get_winner(t1, t2) if rnd.value <= self.sample_round.value else None
+                self.rounds[rnd].append(Match(t1, t2, rnd, self.alpha_fn, winner))
             rnd = Rounds(rnd.value + 1)
             
         # the winner is the winner of the Elite Eight matchup.
         return self.rounds[Rounds.ELITE_8][0].winner
+
+    def get_winner(self, t1, t2) -> int:
+        if t1.seed in self.sample_seeds and t2.seed in self.sample_seeds:
+            return None
+        elif t1.seed in self.sample_seeds:
+            return t1
+        elif t2.seed in self.sample_seeds:
+            return t2
+        return None

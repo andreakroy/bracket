@@ -22,10 +22,10 @@ default_alpha_path = lambda: path + 'data/alpha/alpha_defaults.csv'
 base_alpha_path = lambda rnd: path + 'data/alpha/alpha' + str(rnd.value) + '.csv'
 
 # File paths to the matchup data for the four regions.
-data_files = [path + 'data/matchup/data_east.csv',
+data_files = [path + 'data/matchup/data_midwest.csv',
             path + 'data/matchup/data_west.csv',
+            path + 'data/matchup/data_east.csv',
             path + 'data/matchup/data_south.csv',
-            path + 'data/matchup/data_midwest.csv'
 ]
 
 # File paths to the round appearance data for all 16 seeds.

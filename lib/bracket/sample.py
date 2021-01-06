@@ -15,7 +15,7 @@ class Sample:
     pmf (int) : The Probability Mass Function for each seed reaching a given round.
     rng (np.random.Generator) : A random number generator.
     '''
-    def __init__(self, rnd: Rounds):
+    def __init__(self, rnd: Rounds, seed: int=None):
         '''
         Constructs a Sample for a given round.
 
@@ -24,7 +24,7 @@ class Sample:
         rnd (Rounds) : the round for which the Sample is used.
         '''
         self.rnd = rnd 
-        self.rng = np.random.default_rng()
+        self.rng = np.random.default_rng(seed)
         self.pmf = self.get_pmf()
 
     def __call__(self) -> list:
@@ -65,33 +65,34 @@ class F4_A(Sample):
     ----------
     Sample
     '''
-    def __init__(self):
+    def __init__(self, seed: int=None):
         '''
         Constructs an F4_A Sample.
         '''
-        Sample.__init__(self, Rounds.FINAL_4)
+        Sample.__init__(self, Rounds.FINAL_4, seed)
 
     def __call__(self):
         '''
         Returns 4 sampled seeds for the Final Four.
         '''
         # Sample seeds in the range [1, 16] according to the pmf.
-        return [i for i in self.rng.choice(np.arange(1, 17), 4, p=self.pmf)]
+        for i in self.rng.choice(np.arange(1, 17), 4, p=self.pmf):
+            yield [i]
 
 class E_8(Sample):
     '''
     Defines an E_8 sampling function.
 
     Attributes
-    ----------
+    ----------  
     Sample
     '''
-    def __init__(self):
+    def __init__(self, seed=None):
         '''
         Constructs an E_8 Sample.
         '''
-        Sample.__init__(self, Rounds.ELITE_8)
-        
+        Sample.__init__(self, Rounds.ELITE_8, seed)
+
     def __call__(self):
         '''
         Returns 8 seeds for the Elite 8.
@@ -111,9 +112,5 @@ class E_8(Sample):
         bottom_half_pmf = [float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf]
         tops = self.rng.choice(top_half_seeds, 4, p=top_half_pmf)
         bottoms = self.rng.choice(bottom_half_seeds, 4, p=bottom_half_pmf)
-
-        out = []
         for i in range(len(tops)):
-            out.append(tops[i])
-            out.append(bottoms[i])
-        return out
+            yield [tops[i], bottoms[i]]
