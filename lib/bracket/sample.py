@@ -1,93 +1,105 @@
-from .round import Rounds
 import random
 import numpy as np
 from .utils import *
-from csv import reader
+import csv
 
 class Sample:
     '''
-    Initializes
-    '''
-    def __init__(self, rnd: Rounds):
-        self.rnd = rnd 
-        self.pmf = [] # Probability mass function for each seed reaching a given round
-        self.rng = np.random.default_rng()
-        
-        self.calculate_pmf()
-
-    def __call__(self):
-        pass
-
-    '''
-    Returns a probability from the probability mass function
-    of the truncated geometric distribution.
+    Initializes a callable Sample. Calling the sample yields a list of seeds that
+    must win (and survive up to) the Sample round.
 
     Attributes
     ----------
-    round (int) - the round for which the probability is desired.
-    seed (int) - the seed for which the probability is desired.
+    rnd (int) : The round [1, 6] for which the sampling function is used.
+    pmf (int) : The Probability Mass Function for each seed reaching a given round.
+    rng (np.random.Generator) : A random number generator.
     '''
-    def calculate_pmf(self) -> list:
-        observed_counts = [] # Observed counts of Final Four Appearances
-        file_path = utils.sample_base_path + str(self.rnd) + ".csv"
+    def __init__(self, rnd: int):
+        '''
+        Constructs a Sample for a given round.
+
+        Parameters
+        ----------
+        rnd (int) : the round for which the Sample is used.
+        '''
+        self.rnd = rnd 
+        self.rng = np.random.default_rng()
+        self.pmf = self.get_pmf()
+
+    def __call__(self) -> list:
+        '''
+        Sample callable function. Returns a sampled list of seeds that survive up till a given round.
+        '''
+        pass
+
+    def get_pmf(self) -> list:
+        '''
+        Reads in pmf data and returns a list with a pmf for a specific round.
+        '''
+        # observed counts of Final Four appearances for each team.
+        observed_counts = [] 
+        file_path = sample_base_path + str(self.rnd) + '.csv'
 
         # extract all teams from the data file.
         with open(file_path, 'r') as f:
-            csv_reader = reader(f)  
-            
-            for seed_appearances in next(csv_reader):
-                s = int(seed_appearances)
-                observed_counts.append(s)
+            reader = csv.reader(f)  
+            for seed_appearances in next(reader):
+                observed_counts.append(int(seed_appearances))
 
+        # calculate q parameter for the truncated geometric distribution.
         q = 0
         for i in range(len(observed_counts)):
-            seed = i + 1
-            q += (observed_counts[i] * seed)
-
+            q += (observed_counts[i] * (i + 1))
         q /= sum(observed_counts)
         q = 1 / q
         k = 1 / (1 - (1 - q)**(len(observed_counts)))
 
-        for i in range(len(observed_counts)):
-            self.pmf.append(k * q * (1 - q)**(i))
-
+        return [k * q * (1 - q)**i for i in range(len(observed_counts))]
 
 class F4_A(Sample):
     '''
-    Defines an F4_A sampling function; returns 4 seeds for the Final Four.
+    Defines an F4_A sampling function. 
 
     Attributes
     ----------
-    pmf (list) - the team's tournament seed in the range [1, 16].
-    name (str) - the team's name.
+    Sample
     '''
     def __init__(self):
+        '''
+        Constructs an F4_A Sample.
+        '''
         Sample.__init__(self, 5) # Round 5 (Final Four)
 
     def __call__(self):
+        '''
+        Returns 4 sampled seeds for the Final Four.
+        '''
         seeds = []
-        seeds = self.rng.choice(np.arange(1, 17), 4, p=self.pmf) # TODO
-
+        # Sample seeds in the range [1, 16] according to the pmf.
+        seeds = self.rng.choice(np.arange(1, 17), 4, p=self.pmf)
         return seeds
-
-
 
 class E_8(Sample):
     '''
-    Defines an E_8 sampling function; returns 8 seeds for the Elite 8.
+    Defines an E_8 sampling function.
 
     Attributes
     ----------
-    seed (int) - the team's tournament seed in the range [1, 16].
-    name (str) - the team's name.
+    Sample
     '''
     def __init__(self):
+        '''
+        Constructs an E_8 Sample.
+        '''
         Sample.__init__(self, 4) # Round 4 (Elite Eight)
-        
+
     def __call__(self):
+        '''
+        Returns 8 seeds for the Elite 8.
+        '''
         seeds = []
-        top_half_seeds = utils.matchorder[:8]
-        bottom_half_seeds = utils.matchorder[8:]
+        top_half_seeds = matchorder[:8]
+        bottom_half_seeds = matchorder[8:]
         top_half_pmf = []
         bottom_half_pmf = []
         
@@ -99,18 +111,5 @@ class E_8(Sample):
 
         top_half_pmf = [float(i) / sum(top_half_pmf) for i in top_half_pmf]
         bottom_half_pmf = [float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf]
-
         seeds = self.rng.choice(top_half_seeds, 4, p=top_half_pmf)
         return np.hstack([seeds, (self.rng.choice(bottom_half_seeds, 4, p=bottom_half_pmf))])
-
-
-
-if __name__ == "__main__":
-    #y = Sample()
-    #print(y.run())
-    x = E_8()
-    #x.get_seeds()
-    print(x())
-    # for path in utils.sample_data_files:
-    #     samp = Sample(path)
-    #     print(samp.observed_counts)
