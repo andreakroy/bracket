@@ -28,6 +28,8 @@ class Bracket:
         self.rounds = { Rounds.FINAL_4: [], Rounds.CHAMPIONSHIP: [] }
         self.winner = self.run()
         self.match_list = self.matches()
+        for match in self.match_list:
+            print(match.to_json())
 
     def run(self) -> Team:
         # Rounds 1 - 4 handled in each region.

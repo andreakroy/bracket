@@ -63,7 +63,7 @@ class Region:
         # run this region of the bracket and calculate the winner.
         self.winner = self.run()
         print(self.sample_seeds)
-        print(self.winner.seed)
+        print(self.rounds[Rounds.ELITE_8].pop().to_json())
 
     def run(self) -> Team:
         '''

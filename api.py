@@ -5,4 +5,5 @@ import cgi
 from lib.database import generateJSON
 from lib.bracket.sample import *
 
-print(generateJSON(samplingFunction=E_8()))
+x = generateJSON(samplingFunction=E_8())
+print(x['bitstring'])
