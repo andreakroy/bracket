@@ -11,9 +11,9 @@ class Regions(Enum):
     '''
     Enum defining the four regions in the tournament.
     '''
-    WEST = 0
-    EAST = 1
-    MIDWEST = 2
+    MIDWEST = 0
+    WEST = 1
+    EAST = 2
     SOUTH = 3
 
 class Region:
@@ -29,7 +29,8 @@ class Region:
     winner (Team) : stores the winning Team in the region (AKA the winner of the Elite Eight Matchup
         in a particular region).
     '''
-    def __init__(self, file_path: str, region: Regions, alpha_fn: callable, sample: Sample=None):
+    def __init__(self, file_path: str, region: Regions, alpha_fn: callable, 
+        sample_seeds: list=None, sample_round: Rounds=None):
         '''
         Constructs a Region object.
 
@@ -43,7 +44,8 @@ class Region:
         self.rounds = { rnd: [] for rnd in Rounds if rnd.value < Rounds.FINAL_4.value }
         self.region = region
         self.alpha_fn = alpha_fn
-        self.sample = sample
+        self.sample_seeds = sample_seeds
+        self.sample_round = sample_round
 
         # extract all teams from the data file.
         with open(file_path, 'r') as f:
@@ -51,32 +53,42 @@ class Region:
             for seed, name in csv_reader:
                 s = int(seed)
                 self.teams[s] = Team(s, name)
-        
+
         # initialize known first round matchups.
         for s1, s2 in pairwise(matchorder):
-            self.rounds[Rounds.ROUND_OF_64].append(Match(self.teams[s1], 
-                self.teams[s2], Rounds.ROUND_OF_64, self.alpha_fn))
-        
+            
+            self.rounds[Rounds.ROUND_OF_64].append(Match(self.teams[s1], self.teams[s2],
+                Rounds.ROUND_OF_64, self.alpha_fn, self.get_winner(self.teams[s1], self.teams[s2])))
+                
         # run this region of the bracket and calculate the winner.
         self.winner = self.run()
+        print(self.sample_seeds)
+        print(self.rounds[Rounds.ELITE_8].pop().to_json())
 
     def run(self) -> Team:
         '''
         Returns the winning team in the region and fills in all the matches played.
-        '''   
+        ''' 
         # Start at the round of 32 b/c the round of 64 is initialized from the file data.
         rnd = Rounds.ROUND_OF_32
-        #survivors = self.sample()
 
         while rnd.value < Rounds.FINAL_4.value:
             # Each match is formed from the winners of the previous two matches,
-            for m1, m2 in pairwise(self.rounds[Rounds(rnd.value - 1)]):   
+            for m1, m2 in pairwise(self.rounds[Rounds(rnd.value - 1)]):
                 t1 = m1.winner
                 t2 = m2.winner
-                #if self.sample.rnd.value <= rnd.value: #TODO
-                
-                self.rounds[rnd].append(Match(t1, t2, rnd, self.alpha_fn))
+                winner = self.get_winner(t1, t2) if rnd.value <= self.sample_round.value else None
+                self.rounds[rnd].append(Match(t1, t2, rnd, self.alpha_fn, winner))
             rnd = Rounds(rnd.value + 1)
             
         # the winner is the winner of the Elite Eight matchup.
         return self.rounds[Rounds.ELITE_8][0].winner
+
+    def get_winner(self, t1, t2) -> int:
+        if t1.seed in self.sample_seeds and t2.seed in self.sample_seeds:
+            return None
+        elif t1.seed in self.sample_seeds:
+            return t1
+        elif t2.seed in self.sample_seeds:
+            return t2
+        return None

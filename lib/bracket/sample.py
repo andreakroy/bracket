@@ -15,7 +15,7 @@ class Sample:
     pmf (int) : The Probability Mass Function for each seed reaching a given round.
     rng (np.random.Generator) : A random number generator.
     '''
-    def __init__(self, rnd: Rounds):
+    def __init__(self, rnd: Rounds, seed: int=None):
         '''
         Constructs a Sample for a given round.
 
@@ -24,7 +24,7 @@ class Sample:
         rnd (Rounds) : the round for which the Sample is used.
         '''
         self.rnd = rnd 
-        self.rng = np.random.default_rng()
+        self.rng = np.random.default_rng(seed)
         self.pmf = self.get_pmf()
 
     def __call__(self) -> list:
@@ -65,39 +65,38 @@ class F4_A(Sample):
     ----------
     Sample
     '''
-    def __init__(self):
+    def __init__(self, seed: int=None):
         '''
         Constructs an F4_A Sample.
         '''
-        Sample.__init__(self, Rounds.FINAL_4)
+        Sample.__init__(self, Rounds.FINAL_4, seed)
 
     def __call__(self):
         '''
         Returns 4 sampled seeds for the Final Four.
         '''
-        seeds = []
         # Sample seeds in the range [1, 16] according to the pmf.
-        seeds = self.rng.choice(np.arange(1, 17), 4, p=self.pmf)
-        return seeds
+        for i in self.rng.choice(np.arange(1, 17), 4, p=self.pmf):
+            yield [i]
 
 class E_8(Sample):
     '''
     Defines an E_8 sampling function.
 
     Attributes
-    ----------
+    ----------  
     Sample
     '''
-    def __init__(self):
+    def __init__(self, seed=None):
         '''
         Constructs an E_8 Sample.
         '''
-        Sample.__init__(self, Rounds.ELITE_8)
+        Sample.__init__(self, Rounds.ELITE_8, seed)
+
     def __call__(self):
         '''
         Returns 8 seeds for the Elite 8.
         '''
-        seeds = []
         top_half_seeds = matchorder[:8]
         bottom_half_seeds = matchorder[8:]
         top_half_pmf = []
@@ -111,5 +110,7 @@ class E_8(Sample):
 
         top_half_pmf = [float(i) / sum(top_half_pmf) for i in top_half_pmf]
         bottom_half_pmf = [float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf]
-        seeds = self.rng.choice(top_half_seeds, 4, p=top_half_pmf)
-        return np.hstack([seeds, (self.rng.choice(bottom_half_seeds, 4, p=bottom_half_pmf))])
+        tops = self.rng.choice(top_half_seeds, 4, p=top_half_pmf)
+        bottoms = self.rng.choice(bottom_half_seeds, 4, p=bottom_half_pmf)
+        for i in range(len(tops)):
+            yield [tops[i], bottoms[i]]
