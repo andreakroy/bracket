@@ -75,10 +75,8 @@ class F4_A(Sample):
         '''
         Returns 4 sampled seeds for the Final Four.
         '''
-        seeds = []
         # Sample seeds in the range [1, 16] according to the pmf.
-        seeds = self.rng.choice(np.arange(1, 17), 4, p=self.pmf)
-        return seeds
+        return [i for i in self.rng.choice(np.arange(1, 17), 4, p=self.pmf)]
 
 class E_8(Sample):
     '''
@@ -93,11 +91,11 @@ class E_8(Sample):
         Constructs an E_8 Sample.
         '''
         Sample.__init__(self, Rounds.ELITE_8)
+        
     def __call__(self):
         '''
         Returns 8 seeds for the Elite 8.
         '''
-        seeds = []
         top_half_seeds = matchorder[:8]
         bottom_half_seeds = matchorder[8:]
         top_half_pmf = []
@@ -113,6 +111,9 @@ class E_8(Sample):
         bottom_half_pmf = [float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf]
         tops = self.rng.choice(top_half_seeds, 4, p=top_half_pmf)
         bottoms = self.rng.choice(bottom_half_seeds, 4, p=bottom_half_pmf)
+
+        out = []
         for i in range(len(tops)):
-            yield tops[i]
-            yield bottoms[i]
+            out.append(tops[i])
+            out.append(bottoms[i])
+        return out

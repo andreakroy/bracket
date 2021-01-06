@@ -18,7 +18,7 @@ class Match():
     prob (float) : The probability that team 1 wins according to the model.
     winner (Team) : The team object that wins according to a simulation with the probability.
     '''
-    def __init__(self, team1: Team, team2: Team, rnd: Rounds, alpha_fn: callable):
+    def __init__(self, team1: Team, team2: Team, rnd: Rounds, winner: Team, alpha_fn: callable):
         '''
         Constructs a Match object.
 
@@ -35,7 +35,7 @@ class Match():
         self.rnd = rnd
         self.alpha = alpha_fn(rnd, team1, team2)
         self.prob = self.win_prob()
-        self.winner = self.get_winner()
+        self.winner = winner if winner else self.get_winner() 
 
     def win_prob(self) -> float:
         '''

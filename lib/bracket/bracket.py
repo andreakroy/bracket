@@ -18,16 +18,13 @@ class Bracket:
     def __init__(self, sampling_fn: Sample=None):
         self.af = alpha_fn(Alpha(base_alpha_path), DefaultAlpha(default_alpha_path))
         self.sample = sampling_fn
-        # pass the sampling function to the region if the sample function is for a round played
-        # inside a region.
-        region_sample = self.sample if self.sample.rnd.value < Rounds.FINAL_4 else None
         # Order is important. MIDWEST is paired with WEST and EAST is paired with SOUTH
         # when iterating pairwise over the regions tuple.
-        self.regions = (Region(data_files[0], Regions.MIDWEST, self.af, region_sample), 
-            Region(data_files[1], Regions.WEST, self.af, region_sample),
-            Region(data_files[2], Regions.EAST, self.af, region_sample), 
-            Region(data_files[3], Regions.SOUTH, self.af, region_sample)
-        )
+        self.regions = []
+        for i, path in enumerate(data_files):
+            rnd = self.sample.rnd if self.sample else None
+            seeds = []
+            self.regions.append(Region(path, Regions(i), self.af, , self.sample.rnd))
         self.rounds = { Rounds.FINAL_4: [], Rounds.CHAMPIONSHIP: [] }
         self.winner = self.run()
         self.match_list = self.matches()
