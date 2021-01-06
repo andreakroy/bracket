@@ -5,4 +5,7 @@ import cgi
 from lib.database import generateJSON
 from lib.bracket.sample import *
 
-print(generateJSON())
+x = E_8()
+gen = x()
+for i in gen:
+    print(i)

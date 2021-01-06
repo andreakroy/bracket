@@ -111,5 +111,8 @@ class E_8(Sample):
 
         top_half_pmf = [float(i) / sum(top_half_pmf) for i in top_half_pmf]
         bottom_half_pmf = [float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf]
-        seeds = self.rng.choice(top_half_seeds, 4, p=top_half_pmf)
-        return np.hstack([seeds, (self.rng.choice(bottom_half_seeds, 4, p=bottom_half_pmf))])
+        tops = self.rng.choice(top_half_seeds, 4, p=top_half_pmf)
+        bottoms = self.rng.choice(bottom_half_seeds, 4, p=bottom_half_pmf)
+        for i in range(len(tops)):
+            yield tops[i]
+            yield bottoms[i]
