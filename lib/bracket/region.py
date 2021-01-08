@@ -1,6 +1,6 @@
 from csv import reader
 from enum import Enum
-from .alpha import alpha_fn
+from .alpha import Alpha
 from .match import Match
 from .round import Rounds
 from .team import Team
@@ -22,14 +22,17 @@ class Region:
 
     Attributes
     ----------
-    teams (dict) : a dict with seed number -> Team for each of the sixteen teams in the region.
-    rounds (dict) : a dict with Rounds -> list of Match objects for each of the six rounds in the tournament.
-    region (Regions) : an enum value representing one of the four possible Regions.
-    alpha_fn (callable) : a function to look up alpha values (see alpha.py).
-    winner (Team) : stores the winning Team in the region (AKA the winner of the Elite Eight Matchup
-        in a particular region).
+    teams (dict) : a dict with seed number -> Team for each of the
+        sixteen teams in the region.
+    rounds (dict) : a dict with Rounds -> list of Match objects
+        for each of the six rounds in the tournament.
+    region (Regions) : an enum value representing one of the
+        four possible Regions.
+    alpha (Alpha) : an Alpha object to query alpha values.
+    winner (Team) : stores the winning Team in the region
+        (AKA the winner of the Elite Eight Matchup in a particular region).
     '''
-    def __init__(self, file_path: str, region: Regions, alpha_fn: callable, 
+    def __init__(self, file_path: str, region: Regions, alpha: Alpha, 
         sample_seeds: list=None, sample_round: Rounds=None):
         '''
         Constructs a Region object.
@@ -43,7 +46,7 @@ class Region:
         self.teams = {}
         self.rounds = { rnd: [] for rnd in Rounds if rnd.value < Rounds.FINAL_4.value }
         self.region = region
-        self.alpha_fn = alpha_fn
+        self.alpha = alpha
         self.sample_seeds = sample_seeds
         self.sample_round = sample_round
 
@@ -56,14 +59,11 @@ class Region:
 
         # initialize known first round matchups.
         for s1, s2 in pairwise(matchorder):
-            
             self.rounds[Rounds.ROUND_OF_64].append(Match(self.teams[s1], self.teams[s2],
-                Rounds.ROUND_OF_64, self.alpha_fn, self.get_winner(self.teams[s1], self.teams[s2])))
+                Rounds.ROUND_OF_64, self.alpha.get_alpha(Rounds.ROUND_OF_64, s1, s2), self.get_winner(self.teams[s1], self.teams[s2])))
                 
         # run this region of the bracket and calculate the winner.
         self.winner = self.run()
-        print(self.sample_seeds)
-        print(self.rounds[Rounds.ELITE_8].pop().to_json())
 
     def run(self) -> Team:
         '''
@@ -78,7 +78,7 @@ class Region:
                 t1 = m1.winner
                 t2 = m2.winner
                 winner = self.get_winner(t1, t2) if rnd.value <= self.sample_round.value else None
-                self.rounds[rnd].append(Match(t1, t2, rnd, self.alpha_fn, winner))
+                self.rounds[rnd].append(Match(t1, t2, rnd, self.alpha.get_alpha(rnd, t1.seed, t2.seed), winner))
             rnd = Rounds(rnd.value + 1)
             
         # the winner is the winner of the Elite Eight matchup.

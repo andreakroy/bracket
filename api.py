@@ -6,4 +6,4 @@ from lib.database import generateJSON
 from lib.bracket.sample import *
 
 x = generateJSON(samplingFunction=E_8())
-print(x['bitstring'])
+print(x)

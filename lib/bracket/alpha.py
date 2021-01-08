@@ -5,84 +5,42 @@ import csv, os
 from .round import Rounds
 from .team import Team
 
-class DefaultAlpha:
+class Alpha:
     '''
-    Stores the default alpha values for each round in memory.
+    Stores the alpha values for each round in memory.
     '''
-    def __init__(self, path_fn: callable):
+    def __init__(self, default_alpha_path: str, r1_alpha_path: str):
         '''
         Constructs a DefaultAlpha object to look up default alpha values by round.
         
         Parameters
         ----------
-        
-        path_fn (callable) : a function which returns the name of the file path 
-            of the default alpha values file.
+        default_alpha_path (str) : a file path for the default alpha file
+        r1_alpha_path (callable) : a file path for the round 1 alpha file.
         '''
-        self.alphas = {}
-        with open(path_fn(), 'r') as data:
+        self.default_alphas = {}
+        self.r1_alphas = {}
+        with open(default_alpha_path, 'r') as data:
             reader = csv.reader(data)
             for rnd, alpha in reader:
-                self.alphas[Rounds(int(rnd))] = float(alpha)
+                self.default_alphas[Rounds(int(rnd))] = float(alpha)
+        with open(r1_alpha_path, 'r') as data:
+            reader = csv.reader(data)
+            for s1, s2, alpha in reader:
+                self.r1_alphas[tuple(sorted((int(s1), int(s2))))] = float(alpha)
     
-    def get_alpha(self, rnd: Rounds) -> float:
+    def get_alpha(self, rnd: Rounds, s1: int=None, s2: int=None) -> float:
         '''
         Returns the default alpha value for a particular round.
         Raises a KeyError if an invalid rnd argument is provided.
 
         Parameters
         ----------
-        rnd (Rounds) : a valid Enum value representing the round.
-        '''
-        return self.alphas[rnd]
-
-class Alpha:
-    '''
-    Class to store a set of alpha values for a particular year.
-    '''
-    def __init__(self, path_fn: callable):
-        '''
-        Constructs an Alpha object to look up alpha values based on a pair of seeds and a round.
-        
-        Parameters
-        ----------
-        path_fn (callable) : a function which takes in a Rounds enum values and returns the name of 
-            the file path of the alpha values file for that particular round.
-        '''
-        self.alphas = {} # Each round is a dictionary that maps two seeds onto their alpha values
-        for rnd in Rounds:
-            self.alphas[rnd] = {}
-            with open(path_fn(rnd), 'r') as data:
-                reader = csv.reader(data)
-                for s1, s2, alpha in reader:
-                    self.alphas[rnd][tuple(sorted((int(s1), int(s2))))] = float(alpha)
-
-    def get_alpha(self, rnd: Rounds, s1: int, s2: int) -> float:
-        return self.alphas[rnd][tuple(sorted((s1, s2)))]
-
-def alpha_fn(alpha: Alpha, default_alpha: DefaultAlpha) -> callable:
-    '''
-    Returns a function which first looks up an alpha value and if not available looks up a default
-    alpha value from an Alpha and DefaultAlpha object in that order.
-
-    Parameters
-    ----------
-    alpha (Alpha) : an Alpha object storing alpha values in memory.
-    default_alpha (DefaultAlpha) : a DefaultAlpha object storing default alpha values in memory. 
-    '''
-    def alpha_(rnd: Rounds, t1: Team, t2: Team) -> float:
-        '''
-        Function that returns an alpha value for a round and pair of seeds if available. If not, returns the 
-        default alpha value for that particular round.
-
-        Parameters
-        ----------
         rnd (Rounds) : the round enum value.
-        t1 (Team) : a team object representing the first team in a match pairing.
-        t2 (Team) : a team object representing the second team in a match pairing.
+        s1 (int) : the seed of t1 in a match pairing.
+        s2 (int) : the seed of t2 in a match pairing.
         '''
-        try:
-            return alpha.alphas[rnd][tuple(sorted((t1.seed, t2.seed)))]
-        except:
-            return default_alpha.alphas[rnd]
-    return alpha_
+        if rnd == Rounds.ROUND_OF_64:
+            return self.r1_alphas[tuple(sorted((s1, s2)))]
+        else:
+            return self.default_alphas[rnd]

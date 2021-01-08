@@ -4,7 +4,7 @@
 from .sample import Sample
 from enum import Enum
 import json, os, random
-from .alpha import *
+from .alpha import Alpha
 from .match import Match
 from .team import Team
 from.region import Region, Regions
@@ -16,7 +16,7 @@ class Bracket:
     Defines a tournament bracket.
     '''
     def __init__(self, sampling_fn: Sample=None):
-        self.af = alpha_fn(Alpha(base_alpha_path), DefaultAlpha(default_alpha_path))
+        self.alpha = Alpha(default_alpha_path, r1_alpha_path)
         self.sample = sampling_fn()
         # Order is important. MIDWEST is paired with WEST and EAST is paired with SOUTH
         # when iterating pairwise over the regions tuple.
@@ -24,23 +24,21 @@ class Bracket:
         for i, path in enumerate(data_files):
             rnd = sampling_fn.rnd if self.sample else None
             seeds = next(self.sample) if self.sample else None
-            self.regions.append(Region(path, Regions(i), self.af, seeds, rnd))
+            self.regions.append(Region(path, Regions(i), self.alpha, seeds, rnd))
         self.rounds = { Rounds.FINAL_4: [], Rounds.CHAMPIONSHIP: [] }
         self.winner = self.run()
         self.match_list = self.matches()
-        for match in self.match_list:
-            print(match.to_json())
-
+        
     def run(self) -> Team:
         # Rounds 1 - 4 handled in each region.
         # Round 5 (Final 4)
         for pair in pairwise(self.regions):
             self.rounds[Rounds.FINAL_4].append(Match(pair[0].winner, pair[1].winner, 
-                Rounds.FINAL_4, self.af))
+                Rounds.FINAL_4, self.alpha.get_alpha(Rounds.FINAL_4)))
         # Round 6 (Championship)
         self.rounds[Rounds.CHAMPIONSHIP].append(
             Match(self.rounds[Rounds.FINAL_4][0].winner, self.rounds[Rounds.FINAL_4][1].winner,
-                Rounds.CHAMPIONSHIP, self.af))
+                Rounds.CHAMPIONSHIP, self.alpha.get_alpha(Rounds.CHAMPIONSHIP)))
         return self.rounds[Rounds.CHAMPIONSHIP].pop().winner
     
     def bits(self) -> str:

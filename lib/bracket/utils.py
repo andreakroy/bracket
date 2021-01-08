@@ -15,11 +15,11 @@ matchorder = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
 # The base file path
 path = dirname(dirname(realpath(__file__))) + "/"
 
-# Function which returns the default alpha file path.
-default_alpha_path = lambda: path + 'data/alpha/alpha_defaults.csv'
+# The file path for the default alpha file.
+default_alpha_path = path + 'data/alpha/alpha_defaults.csv'
 
-# Function which given a round, returns the alpha file path for that round.
-base_alpha_path = lambda rnd: path + 'data/alpha/alpha' + str(rnd.value) + '.csv'
+# the file path for the round 1 alpha file.
+r1_alpha_path = path + 'data/alpha/alpha_r1.csv'
 
 # File paths to the matchup data for the four regions.
 data_files = [path + 'data/matchup/data_midwest.csv',
