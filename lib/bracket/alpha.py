@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-import csv, os
+import os, toml
 from .round import Rounds
 from .team import Team
 
@@ -9,25 +9,17 @@ class Alpha:
     '''
     Stores the alpha values for each round in memory.
     '''
-    def __init__(self, default_alpha_path: str, r1_alpha_path: str):
+    def __init__(self, alpha_path: str):
         '''
         Constructs a DefaultAlpha object to look up default alpha values by round.
         
         Parameters
         ----------
-        default_alpha_path (str) : a file path for the default alpha file
-        r1_alpha_path (callable) : a file path for the round 1 alpha file.
+        alpha_path (str) : a file path to the alpha .toml file.
         '''
-        self.default_alphas = {}
-        self.r1_alphas = {}
-        with open(default_alpha_path, 'r') as data:
-            reader = csv.reader(data)
-            for rnd, alpha in reader:
-                self.default_alphas[Rounds(int(rnd))] = float(alpha)
-        with open(r1_alpha_path, 'r') as data:
-            reader = csv.reader(data)
-            for s1, s2, alpha in reader:
-                self.r1_alphas[tuple(sorted((int(s1), int(s2))))] = float(alpha)
+        t = toml.load(alpha_path)
+        self.default_alphas = { int(rnd) : float(alpha) for rnd, alpha in t['default_alpha'].items() }
+        self.r1_alphas = { int(lower_seed) : float(alpha) for lower_seed, alpha in t['r1_alpha'].items() }
     
     def get_alpha(self, rnd: Rounds, s1: int=None, s2: int=None) -> float:
         '''
@@ -41,6 +33,6 @@ class Alpha:
         s2 (int) : the seed of t2 in a match pairing.
         '''
         if rnd == Rounds.ROUND_OF_64:
-            return self.r1_alphas[tuple(sorted((s1, s2)))]
+            return self.r1_alphas[min(s1, s2)]
         else:
-            return self.default_alphas[rnd]
+            return self.default_alphas[rnd.value]

@@ -7,15 +7,6 @@ from .team import Team
 from .utils import matchorder, pairwise
 from .sample import * 
 
-class Regions(Enum):
-    '''
-    Enum defining the four regions in the tournament.
-    '''
-    MIDWEST = 0
-    WEST = 1
-    EAST = 2
-    SOUTH = 3
-
 class Region:
     '''
     Defines a region with 16 teams in the tournament.
@@ -26,41 +17,32 @@ class Region:
         sixteen teams in the region.
     rounds (dict) : a dict with Rounds -> list of Match objects
         for each of the six rounds in the tournament.
-    region (Regions) : an enum value representing one of the
-        four possible Regions.
     alpha (Alpha) : an Alpha object to query alpha values.
     winner (Team) : stores the winning Team in the region
         (AKA the winner of the Elite Eight Matchup in a particular region).
     '''
-    def __init__(self, file_path: str, region: Regions, alpha: Alpha, 
+    def __init__(self, teams: dict, alpha: Alpha, 
         sample_seeds: list=None, sample_round: Rounds=None):
         '''
         Constructs a Region object.
 
         Parameters
         ----------
-        file_path (str) : a path to a .csv file storing the first round matchup data.
+        teams (dict) : a map of seed onto team name for each particular region.
         region (Regions) : a Regions enum value storing the region.
-        alpha_fn (callable) : a function to look up alpha values (see alpha.py).
+        alpha (Alpha) : an Alpha object to look up alpha values (see alpha.py and alpha.toml).
         '''
-        self.teams = {}
+        self.teams = { s: Team(s, n) for s, n in teams.items() }
         self.rounds = { rnd: [] for rnd in Rounds if rnd.value < Rounds.FINAL_4.value }
-        self.region = region
         self.alpha = alpha
         self.sample_seeds = sample_seeds
         self.sample_round = sample_round
 
-        # extract all teams from the data file.
-        with open(file_path, 'r') as f:
-            csv_reader = reader(f)  
-            for seed, name in csv_reader:
-                s = int(seed)
-                self.teams[s] = Team(s, name)
-
         # initialize known first round matchups.
         for s1, s2 in pairwise(matchorder):
             self.rounds[Rounds.ROUND_OF_64].append(Match(self.teams[s1], self.teams[s2],
-                Rounds.ROUND_OF_64, self.alpha.get_alpha(Rounds.ROUND_OF_64, s1, s2), self.get_winner(self.teams[s1], self.teams[s2])))
+                Rounds.ROUND_OF_64, self.alpha.get_alpha(Rounds.ROUND_OF_64, s1, s2), 
+                self.get_winner(self.teams[s1], self.teams[s2])))
                 
         # run this region of the bracket and calculate the winner.
         self.winner = self.run()

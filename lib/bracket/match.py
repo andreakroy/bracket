@@ -27,8 +27,7 @@ class Match():
         team1 (Team) : the Team object for t1.
         team2 (Team) : the Team object for t2.
         rnd (Rounds) : the rnd enum value representing the current round.
-        alpha_fn (callable) : a function which looks up the alpha values from an Alpha and DefaultAlpha
-            object given a pair of 
+        alpha (float) : an alpha value for the matchup
         '''
         self.t1 = team1
         self.t2 = team2

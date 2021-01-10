@@ -2,7 +2,7 @@ import random
 import numpy as np
 from .round import Rounds
 from .utils import *
-import csv
+import toml
 
 class Sample:
     '''
@@ -11,11 +11,12 @@ class Sample:
 
     Attributes
     ----------
-    rnd (Rounds) : The round enum valyue for which the sampling function is used.
-    pmf (int) : The Probability Mass Function for each seed reaching a given round.
-    rng (np.random.Generator) : A random number generator.
+    rnd (Rounds) : the round enum valyue for which the sampling function is used.
+    pmf (int) : the Probability Mass Function for each seed reaching a given round.
+    rng (np.random.Generator) : a random number generator.
+    adjusted_seeds (dict) : a map of adjusted seeds onto to the adjusted number of ocurrences.
     '''
-    def __init__(self, rnd: Rounds, seed: int=None):
+    def __init__(self, rnd: Rounds, seed: int=None, adjusted_seeds: dict=None):
         '''
         Constructs a Sample for a given round.
 
@@ -25,6 +26,7 @@ class Sample:
         '''
         self.rnd = rnd 
         self.rng = np.random.default_rng(seed)
+        self.adjusted_seeds = adjusted_seeds
         self.pmf = self.get_pmf()
 
     def __call__(self) -> list:
@@ -37,25 +39,21 @@ class Sample:
         '''
         Reads in pmf data and returns a list with a pmf for a specific round.
         '''
-        # observed counts of Final Four appearances for each team.
-        observed_counts = [] 
-        file_path = sample_base_path + str(self.rnd.value) + '.csv'
-
         # extract all teams from the data file.
-        with open(file_path, 'r') as f:
-            reader = csv.reader(f)  
-            for seed_appearances in next(reader):
-                observed_counts.append(int(seed_appearances))
+        t = toml.load(sample_path)
+
+        # observed counts of appearances in the sample round for each seed.
+        observed_counts = { int(seed) : count for seed, count in t[str(self.rnd.value)].items() }
 
         # calculate q parameter for the truncated geometric distribution.
         q = 0
-        for i in range(len(observed_counts)):
-            q += (observed_counts[i] * (i + 1))
-        q /= sum(observed_counts)
+        for seed, count in observed_counts.items():
+            q += (count * seed)
+        q /= sum(observed_counts.values())
         q = 1 / q
         k = 1 / (1 - (1 - q)**(len(observed_counts)))
-
-        return [k * q * (1 - q)**i for i in range(len(observed_counts))]
+        pmf = [k * q * (1 - q)**(i - 1) for i in observed_counts]
+        return [val / sum(pmf) for val in pmf]
 
 class F4_A(Sample):
     '''
@@ -69,7 +67,7 @@ class F4_A(Sample):
         '''
         Constructs an F4_A Sample.
         '''
-        Sample.__init__(self, Rounds.FINAL_4, seed)
+        Sample.__init__(self, Rounds.FINAL_4, seed, {11 : 1})
 
     def __call__(self):
         '''
@@ -91,7 +89,7 @@ class E_8(Sample):
         '''
         Constructs an E_8 Sample.
         '''
-        Sample.__init__(self, Rounds.ELITE_8, seed)
+        Sample.__init__(self, Rounds.ELITE_8, seed, {1: 1, 11: 1})
 
     def __call__(self):
         '''

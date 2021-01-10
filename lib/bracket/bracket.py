@@ -3,11 +3,11 @@
 
 from .sample import Sample
 from enum import Enum
-import json, os, random
+import json, os, random, toml
 from .alpha import Alpha
 from .match import Match
 from .team import Team
-from.region import Region, Regions
+from.region import Region
 from .round import Rounds
 from .utils import *
 
@@ -16,15 +16,16 @@ class Bracket:
     Defines a tournament bracket.
     '''
     def __init__(self, sampling_fn: Sample=None):
-        self.alpha = Alpha(default_alpha_path, r1_alpha_path)
+        self.alpha = Alpha(alpha_path)
         self.sample = sampling_fn()
-        # Order is important. MIDWEST is paired with WEST and EAST is paired with SOUTH
-        # when iterating pairwise over the regions tuple.
         self.regions = []
-        for i, path in enumerate(data_files):
+        t = toml.load(regions_path)
+        # iterate through all 4 regions
+        for i in range(4):
             rnd = sampling_fn.rnd if self.sample else None
             seeds = next(self.sample) if self.sample else None
-            self.regions.append(Region(path, Regions(i), self.alpha, seeds, rnd))
+            region_teams = {int(seed) : name for seed, name in t[str(i)].items() }
+            self.regions.append(Region(region_teams, self.alpha, seeds, rnd))
         self.rounds = { Rounds.FINAL_4: [], Rounds.CHAMPIONSHIP: [] }
         self.winner = self.run()
         self.match_list = self.matches()

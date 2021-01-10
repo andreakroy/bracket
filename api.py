@@ -2,8 +2,8 @@
 # -*- coding: UTF-8 -*-
 
 import cgi
+from lib.bracket.sample import F4_A
 from lib.database import generateJSON
-from lib.bracket.sample import *
 
-x = generateJSON(samplingFunction=E_8())
+x = generateJSON(samplingFunction=F4_A())
 print(x)
