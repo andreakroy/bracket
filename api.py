@@ -7,7 +7,7 @@ from lib.database import generateJSON
 
 x = generateJSON(samplingFunction=E_8())
 
-f = E_8()
+f = F4_A()
 
 check = { i: 0 for i in range(1, 17) }
 for _ in range(100000):
