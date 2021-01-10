@@ -9,14 +9,14 @@ from .match import Match
 from .team import Team
 from.region import Region
 from .round import Rounds
-from .utils import *
+from .utils import matchorder, pairwise, regions_path
 
 class Bracket:
     '''
     Defines a tournament bracket.
     '''
     def __init__(self, sampling_fn: Sample=None):
-        self.alpha = Alpha(alpha_path)
+        self.alpha = Alpha()
         self.sample = sampling_fn()
         self.regions = []
         t = toml.load(regions_path)

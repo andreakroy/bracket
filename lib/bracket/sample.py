@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from .round import Rounds
-from .utils import *
+from .utils import sample_path, matchorder
 import toml
 
 class Sample:
@@ -14,9 +14,9 @@ class Sample:
     rnd (Rounds) : the round enum valyue for which the sampling function is used.
     pmf (int) : the Probability Mass Function for each seed reaching a given round.
     rng (np.random.Generator) : a random number generator.
-    adjusted_seeds (dict) : a map of adjusted seeds onto to the adjusted number of ocurrences.
+    adjustments (dict) : a map of adjusted seeds onto a tuple with adjusted number of ocurrences and adjusted probability.
     '''
-    def __init__(self, rnd: Rounds, seed: int=None, adjusted_seeds: dict=None):
+    def __init__(self, rnd: Rounds, seed: int=None, adjustments: dict=None):
         '''
         Constructs a Sample for a given round.
 
@@ -26,8 +26,9 @@ class Sample:
         '''
         self.rnd = rnd 
         self.rng = np.random.default_rng(seed)
-        self.adjusted_seeds = adjusted_seeds
-        self.pmf = self.get_pmf()
+        self.adjustments = adjustments
+        self.observed_counts = self.get_observed_counts()
+        self.adjust_counts(self.adjustments)
 
     def __call__(self) -> list:
         '''
@@ -35,7 +36,7 @@ class Sample:
         '''
         pass
 
-    def get_pmf(self) -> list:
+    def get_observed_counts(self) -> list:
         '''
         Reads in pmf data and returns a list with a pmf for a specific round.
         '''
@@ -43,16 +44,28 @@ class Sample:
         t = toml.load(sample_path)
 
         # observed counts of appearances in the sample round for each seed.
-        observed_counts = { int(seed) : count for seed, count in t[str(self.rnd.value)].items() }
+        return { int(seed) : count for seed, count in t[str(self.rnd.value)].items() }
 
+    def adjust_counts(self, adjustments: dict) -> None:
+        '''
+        Adjusts the expected counts.
+
+        Parameters
+        ----------
+        adjustments (dict) : a map of seeds to adjust onto the new count.
+        '''
+        for seed, (new_count, _) in adjustments.items():
+            self.observed_counts[seed] = new_count
+
+    def get_pmf(self) -> list:
         # calculate q parameter for the truncated geometric distribution.
         q = 0
-        for seed, count in observed_counts.items():
+        for seed, count in self.observed_counts.items():
             q += (count * seed)
-        q /= sum(observed_counts.values())
+        q /= sum(self.observed_counts.values())
         q = 1 / q
-        k = 1 / (1 - (1 - q)**(len(observed_counts)))
-        pmf = [k * q * (1 - q)**(i - 1) for i in observed_counts]
+        k = 1 / (1 - (1 - q)**(len(self.observed_counts)))
+        pmf = [ k * q * (1 - q)**(i - 1) for i in self.observed_counts ]
         return [val / sum(pmf) for val in pmf]
 
 class F4_A(Sample):
@@ -67,14 +80,24 @@ class F4_A(Sample):
         '''
         Constructs an F4_A Sample.
         '''
-        Sample.__init__(self, Rounds.FINAL_4, seed, {11 : 1})
+        t = toml.load(sample_path)
+        adjustments = { int(seed) : (int(new_count), float(prob)) for seed, [new_count, prob] in t['F4_A'].items() }
+        Sample.__init__(self, Rounds.FINAL_4, seed, adjustments)
 
     def __call__(self):
         '''
         Returns 4 sampled seeds for the Final Four.
         '''
-        # Sample seeds in the range [1, 16] according to the pmf.
-        for i in self.rng.choice(np.arange(1, 17), 4, p=self.pmf):
+        # the number of seeds to generate with the pmf. Starts with 4 and then is decremented everytime a seed is sampled
+        # in stage 1.
+        num = 4
+        # initial sampling procedure using adjustments
+        for seed, (_, prob) in self.adjustments.items():
+            if random.random() < prob:
+                num -= 1
+                yield[seed]
+        # Sample the remaining number of seeds in the range [1, 16] according to the pmf.
+        for i in self.rng.choice(np.arange(1, 17), num, p=self.get_pmf()):
             yield [i]
 
 class E_8(Sample):
@@ -89,7 +112,9 @@ class E_8(Sample):
         '''
         Constructs an E_8 Sample.
         '''
-        Sample.__init__(self, Rounds.ELITE_8, seed, {1: 1, 11: 1})
+        t = toml.load(sample_path)
+        adjustments = { int(seed) : (int(new_count), float(prob)) for seed, [new_count, prob] in t['E_8'].items() }
+        Sample.__init__(self, Rounds.ELITE_8, seed, adjustments)
 
     def __call__(self):
         '''
@@ -97,18 +122,28 @@ class E_8(Sample):
         '''
         top_half_seeds = matchorder[:8]
         bottom_half_seeds = matchorder[8:]
-        top_half_pmf = []
-        bottom_half_pmf = []
-        
-        for seed in top_half_seeds:
-            top_half_pmf.append(self.pmf[seed - 1])
+        pmf = self.get_pmf()
+        top_half_pmf = [ pmf[seed - 1] for seed in top_half_seeds ]
+        bottom_half_pmf = top_half_pmf = [ pmf[seed - 1] for seed in bottom_half_seeds ]
 
-        for seed in bottom_half_seeds:
-            bottom_half_pmf.append(self.pmf[seed - 1])
+        top_half_pmf = [ float(i) / sum(top_half_pmf) for i in top_half_pmf ]
+        bottom_half_pmf = [ float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf ]
 
-        top_half_pmf = [float(i) / sum(top_half_pmf) for i in top_half_pmf]
-        bottom_half_pmf = [float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf]
-        tops = self.rng.choice(top_half_seeds, 4, p=top_half_pmf)
-        bottoms = self.rng.choice(bottom_half_seeds, 4, p=bottom_half_pmf)
+        # initial sample size from top and bottom halves. Decreases as seeds are sampled in stage 1.
+        bottom_num, top_num = 4, 4
+
+        # initial sampling procedure using adjustments
+        for seed, (_, prob) in self.adjustments.items():
+            if random.random() < prob:
+                if seed in top_half_seeds:
+                    top_num -= 1
+                else:
+                    bottom_num -= 1
+                yield[seed]
+
+        tops = self.rng.choice(top_half_seeds, bottom_num, p=top_half_pmf)
+        bottoms = self.rng.choice(bottom_half_seeds, top_num, p=bottom_half_pmf)
+
+        # secondary sampling with geometric pmh        
         for i in range(len(tops)):
             yield [tops[i], bottoms[i]]

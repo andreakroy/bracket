@@ -4,18 +4,15 @@
 import os, toml
 from .round import Rounds
 from .team import Team
+from .utils import alpha_path
 
 class Alpha:
     '''
     Stores the alpha values for each round in memory.
     '''
-    def __init__(self, alpha_path: str):
+    def __init__(self):
         '''
-        Constructs a DefaultAlpha object to look up default alpha values by round.
-        
-        Parameters
-        ----------
-        alpha_path (str) : a file path to the alpha .toml file.
+        Constructs an Alpha object to look up alpha values by round.
         '''
         t = toml.load(alpha_path)
         self.default_alphas = { int(rnd) : float(alpha) for rnd, alpha in t['default_alpha'].items() }
