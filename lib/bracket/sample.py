@@ -24,8 +24,11 @@ class Sample:
         ----------
         rnd (Rounds) : the round for which the Sample is used.
         '''
-        self.rnd = rnd 
-        self.rng = np.random.default_rng(seed)
+        self.rnd = rnd
+        if seed:
+            self.rng = np.random.default_rng(seed)
+        else:
+            self.rng = np.random.default_rng()
         self.adjustments = adjustments
         self.observed_counts = self.get_observed_counts()
         self.adjust_counts(self.adjustments)
@@ -76,29 +79,32 @@ class F4_A(Sample):
     ----------
     Sample
     '''
-    def __init__(self, seed: int=None):
+    def __init__(self, rng_seed: int=None):
         '''
         Constructs an F4_A Sample.
+
+        Parameters
+        ----------
+        rng_seed (int) : a seed to use for the random number generator.
         '''
         t = toml.load(sample_path)
         adjustments = { int(seed) : (int(new_count), float(prob)) for seed, [new_count, prob] in t['F4_A'].items() }
-        Sample.__init__(self, Rounds.FINAL_4, seed, adjustments)
+        Sample.__init__(self, Rounds.FINAL_4, rng_seed, adjustments)
 
     def __call__(self):
         '''
-        Returns 4 sampled seeds for the Final Four.
+        Returns a generator of 4 sample seed lists (with one seed) for the Final Four.
         '''
-        # the number of seeds to generate with the pmf. Starts with 4 and then is decremented everytime a seed is sampled
-        # in stage 1.
-        num = 4
-        # initial sampling procedure using adjustments
-        for seed, (_, prob) in self.adjustments.items():
-            if random.random() < prob:
-                num -= 1
-                yield[seed]
-        # Sample the remaining number of seeds in the range [1, 16] according to the pmf.
-        for i in self.rng.choice(np.arange(1, 17), num, p=self.get_pmf()):
-            yield [i]
+        # note: the seed lists are generated in the following order: upper left, lower left, upper right, lower right.
+        # yield 4 lists of seeds, one for each round
+        for _ in range(4):
+            # initial sampling procedure using adjustments
+            for seed, (_, prob) in self.adjustments.items():
+                if random.random() < prob:
+                    yield[seed]
+                    break
+            # Sample from the remaining number of seeds in the range [1, 16] according to the pmf.
+            yield self.rng.choice(np.arange(1, 17), 1, p=self.get_pmf()).tolist()
 
 class E_8(Sample):
     '''
@@ -128,22 +134,32 @@ class E_8(Sample):
 
         top_half_pmf = [ float(i) / sum(top_half_pmf) for i in top_half_pmf ]
         bottom_half_pmf = [ float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf ]
-
-        # initial sample size from top and bottom halves. Decreases as seeds are sampled in stage 1.
-        bottom_num, top_num = 4, 4
-
-        # initial sampling procedure using adjustments
-        for seed, (_, prob) in self.adjustments.items():
-            if random.random() < prob:
+        
+        # generate seeds for each region
+        for _ in range(4):
+            # generate seed from the top half of the bracket.
+            out = []
+            # first stage of sampling from adjustments
+            for seed, (_, prob) in self.adjustments.items():
                 if seed in top_half_seeds:
-                    top_num -= 1
-                else:
-                    bottom_num -= 1
-                yield[seed]
+                    continue
+                if random.random() < prob:
+                    out.append(seed)
+                    break
+            # second stage of sampling from trunc geom pmf if required
+            if not len(out):
+                out.extend(self.rng.choice(top_half_seeds, 1, p=top_half_pmf))
+            
+            # generate seeds for the bottom half of the bracket.
+            # first stage of sampling from adjustments
+            for seed, (_, prob) in self.adjustments.items():
+                if seed not in bottom_half_seeds:
+                    continue
+                if random.random() < prob:
+                    out.append(seed)
+                    break
+            # second stage of sampling from trunc geom pmf if required
+            if len(out) != 2:
+                out.extend(self.rng.choice(bottom_half_seeds, 1, p=bottom_half_pmf))
 
-        tops = self.rng.choice(top_half_seeds, bottom_num, p=top_half_pmf)
-        bottoms = self.rng.choice(bottom_half_seeds, top_num, p=bottom_half_pmf)
-
-        # secondary sampling with geometric pmh        
-        for i in range(len(tops)):
-            yield [tops[i], bottoms[i]]
+            yield out

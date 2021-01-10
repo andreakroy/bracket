@@ -6,4 +6,15 @@ from lib.bracket.sample import F4_A, E_8
 from lib.database import generateJSON
 
 x = generateJSON(samplingFunction=E_8())
-print(x)
+
+f = E_8()
+
+check = { i: 0 for i in range(1, 17) }
+for _ in range(100000):
+    gen = f()
+    for lst in gen:
+        for val in lst:
+            check[val] += 1
+
+pmf_sim = { i : check[i] / sum(check.values()) for i in check}
+print(pmf_sim)

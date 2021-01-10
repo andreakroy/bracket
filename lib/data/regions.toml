@@ -1,5 +1,8 @@
 title = "matchups by region-2020"
 
+# NOTE: the regions must be in the following order:
+# upper left, lower left, upper right, lower right
+
 # Midwest Region
 [0]
 1 = "Baylor"
