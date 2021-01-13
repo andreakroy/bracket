@@ -4,8 +4,14 @@
 import cgi
 from lib.bracket.sample import F4_A, E_8
 from lib.database import generateJSON
+from lib.bracket.round import Rounds
 
-x = generateJSON(samplingFunction=E_8())
+s = E_8()
+for _ in range(100):
+    print(s.__call__())
+
+
+""" x = generateJSON(samplingFunction=E_8())
 
 f = F4_A()
 
@@ -17,4 +23,4 @@ for _ in range(100000):
             check[val] += 1
 
 pmf_sim = { i : check[i] / sum(check.values()) for i in check}
-print(pmf_sim)
+print(pmf_sim) """

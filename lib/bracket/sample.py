@@ -3,6 +3,7 @@ import numpy as np
 from .round import Rounds
 from .utils import sample_path, matchorder
 import toml
+from math import ceil, log
 
 class Sample:
     '''
@@ -16,7 +17,7 @@ class Sample:
     rng (np.random.Generator) : a random number generator.
     adjustments (dict) : a map of adjusted seeds onto a tuple with adjusted number of ocurrences and adjusted probability.
     '''
-    def __init__(self, rnd: Rounds, seed: int=None, adjustments: dict=None):
+    def __init__(self, rnd: Rounds, adjustments: dict=None, seed: int=None):
         '''
         Constructs a Sample for a given round.
 
@@ -32,12 +33,6 @@ class Sample:
         self.adjustments = adjustments
         self.observed_counts = self.get_observed_counts()
         self.adjust_counts(self.adjustments)
-
-    def __call__(self) -> list:
-        '''
-        Sample callable function. Returns a sampled list of seeds that survive up till a given round.
-        '''
-        pass
 
     def get_observed_counts(self) -> list:
         '''
@@ -60,16 +55,30 @@ class Sample:
         for seed, (new_count, _) in adjustments.items():
             self.observed_counts[seed] = new_count
 
-    def get_pmf(self) -> list:
-        # calculate q parameter for the truncated geometric distribution.
+    def get_qhat(self, support: list) -> float:
         q = 0
-        for seed, count in self.observed_counts.items():
+        seeded = { seed: count if seed in support else 0 for seed, count in self.observed_counts.items() }
+        for seed, count in seeded.items():
             q += (count * seed)
-        q /= sum(self.observed_counts.values())
-        q = 1 / q
-        k = 1 / (1 - (1 - q)**(len(self.observed_counts)))
-        pmf = [ k * q * (1 - q)**(i - 1) for i in self.observed_counts ]
-        return [val / sum(pmf) for val in pmf]
+        q /= sum(seeded.values())
+        return 1 / q
+
+    def get_psum(self, qhat: float) -> float:
+        return (1 - (1 - qhat)**(len(self.observed_counts)))
+
+    def sample_seed(self, max_val: int, support: list, fixed: int=None):
+        # stage 1: adjustment sample
+        if fixed:
+            if random.random() < self.adjustments[fixed][1]:
+                return fixed
+
+        # stage 2: truncated geometric sampling.
+        qhat = self.get_qhat(support)
+        psum = self.get_psum(qhat)
+        
+        u = random.random() * psum
+        if max_val:
+            return min(max_val, int(ceil(log(u) / log(1 - qhat))))
 
 class F4_A(Sample):
     '''
@@ -89,22 +98,13 @@ class F4_A(Sample):
         '''
         t = toml.load(sample_path)
         adjustments = { int(seed) : (int(new_count), float(prob)) for seed, [new_count, prob] in t['F4_A'].items() }
-        Sample.__init__(self, Rounds.FINAL_4, rng_seed, adjustments)
+        Sample.__init__(self, Rounds.FINAL_4, adjustments, rng_seed)
 
     def __call__(self):
         '''
-        Returns a generator of 4 sample seed lists (with one seed) for the Final Four.
+        Returns a list of 4 sample seed lists (with one seed) for the Final Four.
         '''
-        # note: the seed lists are generated in the following order: upper left, lower left, upper right, lower right.
-        # yield 4 lists of seeds, one for each round
-        for _ in range(4):
-            # initial sampling procedure using adjustments
-            for seed, (_, prob) in self.adjustments.items():
-                if random.random() < prob:
-                    yield[seed]
-                    break
-            # Sample from the remaining number of seeds in the range [1, 16] according to the pmf.
-            yield self.rng.choice(np.arange(1, 17), 1, p=self.get_pmf()).tolist()
+        return [[self.sample_seed(16, matchorder, 11)] for _ in range(4)]
 
 class E_8(Sample):
     '''
@@ -120,46 +120,15 @@ class E_8(Sample):
         '''
         t = toml.load(sample_path)
         adjustments = { int(seed) : (int(new_count), float(prob)) for seed, [new_count, prob] in t['E_8'].items() }
-        Sample.__init__(self, Rounds.ELITE_8, seed, adjustments)
+        Sample.__init__(self, Rounds.ELITE_8, adjustments, seed)
 
     def __call__(self):
         '''
         Returns 8 seeds for the Elite 8.
         '''
-        top_half_seeds = matchorder[:8]
-        bottom_half_seeds = matchorder[8:]
-        pmf = self.get_pmf()
-        top_half_pmf = [ pmf[seed - 1] for seed in top_half_seeds ]
-        bottom_half_pmf = top_half_pmf = [ pmf[seed - 1] for seed in bottom_half_seeds ]
-
-        top_half_pmf = [ float(i) / sum(top_half_pmf) for i in top_half_pmf ]
-        bottom_half_pmf = [ float(i) / sum(bottom_half_pmf) for i in bottom_half_pmf ]
-        
-        # generate seeds for each region
+        out = []
         for _ in range(4):
-            # generate seed from the top half of the bracket.
-            out = []
-            # first stage of sampling from adjustments
-            for seed, (_, prob) in self.adjustments.items():
-                if seed in top_half_seeds:
-                    continue
-                if random.random() < prob:
-                    out.append(seed)
-                    break
-            # second stage of sampling from trunc geom pmf if required
-            if not len(out):
-                out.extend(self.rng.choice(top_half_seeds, 1, p=top_half_pmf))
-            
-            # generate seeds for the bottom half of the bracket.
-            # first stage of sampling from adjustments
-            for seed, (_, prob) in self.adjustments.items():
-                if seed not in bottom_half_seeds:
-                    continue
-                if random.random() < prob:
-                    out.append(seed)
-                    break
-            # second stage of sampling from trunc geom pmf if required
-            if len(out) != 2:
-                out.extend(self.rng.choice(bottom_half_seeds, 1, p=bottom_half_pmf))
-
-            yield out
+            s1 = list(range(1, 9))[self.sample_seed(8, matchorder[:8]) - 1]
+            s2 = list(range(9, 17))[self.sample_seed(8, matchorder[8:]) - 1]
+            out.append([s1, s2])
+        return out
