@@ -62,7 +62,7 @@ title = "sample data-2020"
 # Each pair of elements in the value represents the adjusted count and the 
 # adjusted probability.
 [F4_A]
-11 = [1.0, 0.026]
+11 = [3.0, 0.026]
 
 # Adjusted probability for each seed based on minimizing truncated
 # geometric chi-sq. value.

@@ -15,11 +15,11 @@ matchorder = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
 # The base file path
 path = dirname(dirname(realpath(__file__))) + "/"
 
-# The file path for the alpha configuration file.
-alpha_path = path + 'data/alpha.toml'
+# The file path for the men's data folder.
+men_path = path + 'data/men/'
 
-# the file path for the regions configuration file.
-regions_path = path + 'data/regions.toml'
+# the file path for the women's data folder.
+women_path = path + 'data/women/'
 
 # File paths to the sample configuration file.
 sample_path = path + 'data/sample.toml'

@@ -7,19 +7,35 @@ import json, os, random, toml
 from .alpha import Alpha
 from .match import Match
 from .team import Team
-from.region import Region
+from .region import Region
 from .round import Rounds
-from .utils import matchorder, pairwise, regions_path
+from .utils import matchorder, pairwise, men_path, women_path
+
+class BracketType(Enum):
+    '''
+    Enum to select the men's or women's bracket.
+    '''
+    MEN = 0
+    WOMEN = 1
 
 class Bracket:
     '''
     Defines a tournament bracket.
     '''
-    def __init__(self, sampling_fn: Sample=None):
-        self.alpha = Alpha()
+    def __init__(self, bracket_type: BracketType, sampling_fn: Sample=None):
+        '''
+        Constructs a Bracket object.
+
+        Parameters
+        ----------
+        bracket_type (BracketType) : a BracketType enum value that selects the men's or women's bracket.
+        sampling_fn (Sample) : a Sample object (i.e. F4_A or E_8).
+        '''
+        data_path = men_path if bracket_type == BracketType.MEN else women_path
+        self.alpha = Alpha(data_path + 'alpha.toml')
         self.sample = sampling_fn() if sampling_fn else None
         self.regions = []
-        t = toml.load(regions_path)
+        t = toml.load(data_path + 'regions.toml')
         # iterate through all 4 regions
         for i in range(4):
             rnd = sampling_fn.rnd if self.sample else None

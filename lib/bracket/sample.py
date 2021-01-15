@@ -77,8 +77,10 @@ class Sample:
         psum = self.get_psum(qhat)
         
         u = random.random() * psum
+        sampled = int(ceil(log(u) / log(1 - qhat)))
         if max_val:
-            return min(max_val, int(ceil(log(u) / log(1 - qhat))))
+            return min(max_val, sampled)
+        return sampled
 
 class F4_A(Sample):
     '''
@@ -128,8 +130,8 @@ class E_8(Sample):
         '''
         out = []
         for _ in range(4):
-            top_half = matchorder[:8]
-            bottom_half = matchorder[:8]
+            top_half = sorted(matchorder[:8])
+            bottom_half = sorted(matchorder[8:])
             s1 = self.sample_seed(8, top_half)
             s2 = self.sample_seed(8, bottom_half)
             out.append([top_half[s1 - 1], top_half[s2 - 1]])

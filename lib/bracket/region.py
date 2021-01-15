@@ -1,11 +1,9 @@
-from csv import reader
-from enum import Enum
 from .alpha import Alpha
 from .match import Match
 from .round import Rounds
 from .team import Team
 from .utils import matchorder, pairwise
-from .sample import * 
+
 
 class Region:
     '''
@@ -59,7 +57,9 @@ class Region:
             for m1, m2 in pairwise(self.rounds[Rounds(rnd.value - 1)]):
                 t1 = m1.winner
                 t2 = m2.winner
-                winner = self.get_winner(t1, t2) if rnd.value <= self.sample_round.value else None
+                winner = None
+                if self.sample_round:
+                    winner = self.get_winner(t1, t2) if rnd.value <= self.sample_round.value else None
                 self.rounds[rnd].append(Match(t1, t2, rnd, self.alpha.get_alpha(rnd, t1.seed, t2.seed), winner))
             rnd = Rounds(rnd.value + 1)
             
@@ -67,7 +67,9 @@ class Region:
         return self.rounds[Rounds.ELITE_8][0].winner
 
     def get_winner(self, t1, t2) -> int:
-        if t1.seed in self.sample_seeds and t2.seed in self.sample_seeds:
+        if not self.sample_seeds:
+            return None
+        elif t1.seed in self.sample_seeds and t2.seed in self.sample_seeds:
             return None
         elif t1.seed in self.sample_seeds:
             return t1
