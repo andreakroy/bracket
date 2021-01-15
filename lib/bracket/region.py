@@ -67,6 +67,9 @@ class Region:
         return self.rounds[Rounds.ELITE_8][0].winner
 
     def get_winner(self, t1, t2) -> int:
+        '''
+        If t1 xor t2 are in the sampled seeds then return the seed of the winner, else return None.
+        '''
         if not self.sample_seeds:
             return None
         elif t1.seed in self.sample_seeds and t2.seed in self.sample_seeds:

@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from .round import Rounds
-from .utils import sample_path, matchorder
+from .utils import sample_path, top, bottom
 import toml
 from math import ceil, log
 
@@ -34,6 +34,12 @@ class Sample:
         self.observed_counts = self.get_observed_counts()
         self.adjust_counts(self.adjustments)
 
+    def __call__(self) -> list:
+        '''
+        Returns a list of 4 lists representing the sampled seeds for each region.
+        '''
+        pass
+
     def get_observed_counts(self) -> list:
         '''
         Reads in pmf data and returns a list with a pmf for a specific round.
@@ -55,25 +61,16 @@ class Sample:
         for seed, (new_count, _) in adjustments.items():
             self.observed_counts[seed] = new_count
 
-    def get_qhat(self, support: list) -> float:
-        q = 0
-        # seeded = { seed: count if seed in support else 0 for seed, count in self.observed_counts.items() }
-        for seed, count in self.observed_counts.items():
-            q += (count * seed)
-        q /= sum(self.observed_counts.values())
-        return 1 / q
-
     def get_psum(self, qhat: float) -> float:
         return (1 - (1 - qhat)**(len(self.observed_counts)))
 
-    def sample_seed(self, max_val: int, support: list, fixed: int=None):
+    def sample_seed(self, qhat: float, max_val: int, fixed: int=None):
         # stage 1: adjustment sample
         if fixed:
             if random.random() < self.adjustments[fixed][1]:
                 return fixed
 
         # stage 2: truncated geometric sampling.
-        qhat = self.get_qhat(support)
         psum = self.get_psum(qhat)
         
         u = random.random() * psum
@@ -106,7 +103,18 @@ class F4_A(Sample):
         '''
         Returns a list of 4 sample seed lists (with one seed) for the Final Four.
         '''
-        return [[self.sample_seed(16, matchorder, 11)] for _ in range(4)]
+        qhat = self.get_qhat()
+        return [[self.sample_seed(qhat, 16, 11)] for _ in range(4)]
+
+    def get_qhat(self) -> float:
+        '''
+        Calculates the qhat value for the F4_A function.
+        '''
+        q = 0
+        for seed, count in self.observed_counts.items():
+            q += (count * seed)
+        q /= sum(self.observed_counts.values())
+        return 1 / q
 
 class E_8(Sample):
     '''
@@ -130,9 +138,18 @@ class E_8(Sample):
         '''
         out = []
         for _ in range(4):
-            top_half = sorted(matchorder[:8])
-            bottom_half = sorted(matchorder[8:])
-            s1 = self.sample_seed(8, top_half)
-            s2 = self.sample_seed(8, bottom_half)
-            out.append([top_half[s1 - 1], top_half[s2 - 1]])
+            q1 = self.get_qhat(top)
+            q2 = self.get_qhat(bottom)
+            out.append([top[self.sample_seed(q1, 8, 1) - 1], bottom[self.sample_seed(q1, 8, 11) - 1]])
         return out
+
+    def get_qhat(self, support: list):
+        # get the observed counts in the support.
+        support_counts = {}
+        for seed in support:
+            support_counts[seed] = self.observed_counts[seed]
+        q = 0
+        for i in range(len(support)):
+            q += (support_counts[support[i]] * (i + 1))
+        q /= sum(support_counts.values())
+        return 1 / q

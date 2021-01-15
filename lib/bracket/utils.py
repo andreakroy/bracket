@@ -12,6 +12,12 @@ def pairwise(iterable):
 # The order of seeds (pairwise) in which the matches are played
 matchorder = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
 
+# A sorted list of all teams in the top half of the bracket
+top = [1, 4, 5, 8, 9, 12, 13, 16]
+
+# A sorted list of all teams in the bottom half of the bracket.
+bottom = [2, 3, 6, 7, 10, 11, 14, 15]
+
 # The base file path
 path = dirname(dirname(realpath(__file__))) + "/"
 

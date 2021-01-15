@@ -3,12 +3,15 @@
 
 import cgi
 from lib.bracket import BracketType
-from lib.bracket.sample import F4_A
+from lib.bracket.sample import F4_A, E_8
 from lib.database import generateJSON
 from lib.bracket.round import Rounds
+from lib.bracket.utils import *
 
-x = generateJSON(bracket_type=BracketType.WOMEN)
-print(x)
+f = E_8()
+print(f())
+#x = generateJSON(bracket_type=BracketType.MEN, sampling_fn=F4_A())
+#print(x)
 #print(generateJSON(samplingFunction=F4_A()))
 
 """ s = F4_A()
