@@ -57,10 +57,10 @@ class Sample:
 
     def get_qhat(self, support: list) -> float:
         q = 0
-        seeded = { seed: count if seed in support else 0 for seed, count in self.observed_counts.items() }
-        for seed, count in seeded.items():
+        # seeded = { seed: count if seed in support else 0 for seed, count in self.observed_counts.items() }
+        for seed, count in self.observed_counts.items():
             q += (count * seed)
-        q /= sum(seeded.values())
+        q /= sum(self.observed_counts.values())
         return 1 / q
 
     def get_psum(self, qhat: float) -> float:
@@ -128,7 +128,9 @@ class E_8(Sample):
         '''
         out = []
         for _ in range(4):
-            s1 = list(range(1, 9))[self.sample_seed(8, matchorder[:8]) - 1]
-            s2 = list(range(9, 17))[self.sample_seed(8, matchorder[8:]) - 1]
-            out.append([s1, s2])
+            top_half = matchorder[:8]
+            bottom_half = matchorder[:8]
+            s1 = self.sample_seed(8, top_half)
+            s2 = self.sample_seed(8, bottom_half)
+            out.append([top_half[s1 - 1], top_half[s2 - 1]])
         return out
