@@ -140,7 +140,7 @@ class E_8(Sample):
         for _ in range(4):
             q1 = self.get_qhat(top)
             q2 = self.get_qhat(bottom)
-            out.append([top[self.sample_seed(q1, 8, 1) - 1], bottom[self.sample_seed(q1, 8, 11) - 1]])
+            out.append([top[self.sample_seed(q1, 8, 1) - 1], bottom[self.sample_seed(q2, 8, 11) - 1]])
         return out
 
     def get_qhat(self, support: list):
