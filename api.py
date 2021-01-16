@@ -9,7 +9,23 @@ from lib.bracket.round import Rounds
 from lib.bracket.utils import *
 
 f = E_8()
-print(f())
+#print(f())
+seeds_top = {i : 0 for i in top}
+seeds_bottom = {i : 0 for i in bottom}
+for _ in range(10000):
+    for ls in f():
+        for l in ls:
+            if l in seeds_top:
+                seeds_top[l] += 1
+            if l in seeds_bottom:
+                seeds_bottom[l] += 1
+                
+print({i : seeds_top[i] for i in seeds_top})
+print({i : seeds_bottom[i] for i in seeds_bottom})
+print({i : seeds_top[i] / sum(seeds_top.values()) for i in seeds_top})
+a = {i : seeds_bottom[i] / sum(seeds_bottom.values()) for i in seeds_bottom}
+print(a)
+print(sum(a.values()))
 #x = generateJSON(bracket_type=BracketType.MEN, sampling_fn=F4_A())
 #print(x)
 #print(generateJSON(samplingFunction=F4_A()))
