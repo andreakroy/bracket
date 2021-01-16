@@ -3,45 +3,63 @@
 
 from .sample import Sample
 from enum import Enum
-import json, os, random
-from .alpha import *
+import json, os, random, toml
+from .alpha import Alpha
 from .match import Match
 from .team import Team
-from.region import Region, Regions
+from .region import Region
 from .round import Rounds
-from .utils import *
+from .utils import matchorder, pairwise, men_path, women_path
+
+class BracketType(Enum):
+    '''
+    Enum to select the men's or women's bracket.
+    '''
+    MEN = 0
+    WOMEN = 1
 
 class Bracket:
     '''
     Defines a tournament bracket.
     '''
-    def __init__(self, sampling_fn: Sample=None):
-        self.af = alpha_fn(Alpha(base_alpha_path), DefaultAlpha(default_alpha_path))
-        self.sample = sampling_fn()
-        # Order is important. MIDWEST is paired with WEST and EAST is paired with SOUTH
-        # when iterating pairwise over the regions tuple.
+    def __init__(self, bracket_type: BracketType, sampling_fn: Sample=None):
+        '''
+        Constructs a Bracket object.
+
+        Parameters
+        ----------
+        bracket_type (BracketType) : a BracketType enum value that selects the men's or women's bracket.
+        sampling_fn (Sample) : a Sample object (i.e. F4_A or E_8).
+        '''
+        data_path = men_path if bracket_type == BracketType.MEN else women_path
+        self.alpha = Alpha(data_path + 'alpha.toml')
+        self.sample = sampling_fn() if sampling_fn else None
         self.regions = []
-        for i, path in enumerate(data_files):
+        t = toml.load(data_path + 'regions.toml')
+        # iterate through all 4 regions
+        for i in range(4):
             rnd = sampling_fn.rnd if self.sample else None
-            seeds = next(self.sample) if self.sample else None
-            self.regions.append(Region(path, Regions(i), self.af, seeds, rnd))
+            seeds = self.sample[i] if self.sample else None
+            region_teams = {int(seed) : name for seed, name in t[str(i)].items() }
+            self.regions.append(Region(region_teams, self.alpha, seeds, rnd))
         self.rounds = { Rounds.FINAL_4: [], Rounds.CHAMPIONSHIP: [] }
         self.winner = self.run()
         self.match_list = self.matches()
-        for match in self.match_list:
-            print(match.to_json())
-
+        
     def run(self) -> Team:
+        '''
+        Runs the entire bracket to calculate a winner. Returns the winning Team.
+        '''
         # Rounds 1 - 4 handled in each region.
         # Round 5 (Final 4)
         for pair in pairwise(self.regions):
             self.rounds[Rounds.FINAL_4].append(Match(pair[0].winner, pair[1].winner, 
-                Rounds.FINAL_4, self.af))
+                Rounds.FINAL_4, self.alpha.get_alpha(Rounds.FINAL_4)))
         # Round 6 (Championship)
         self.rounds[Rounds.CHAMPIONSHIP].append(
             Match(self.rounds[Rounds.FINAL_4][0].winner, self.rounds[Rounds.FINAL_4][1].winner,
-                Rounds.CHAMPIONSHIP, self.af))
-        return self.rounds[Rounds.CHAMPIONSHIP].pop().winner
+                Rounds.CHAMPIONSHIP, self.alpha.get_alpha(Rounds.CHAMPIONSHIP)))
+        return self.rounds[Rounds.CHAMPIONSHIP][-1].winner
     
     def bits(self) -> str:
         '''
@@ -77,6 +95,8 @@ class Bracket:
         '''
         d = {
             'bitstring': self.bits(),
-            'matches' : [match.to_json() for match in self.matches()]
+            'matches' : [match.to_json() for match in self.matches()],
+            'sampled_seeds': self.sample,
+            'winner': self.winner.to_json()
         }
         return d

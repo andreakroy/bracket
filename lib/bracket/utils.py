@@ -12,21 +12,20 @@ def pairwise(iterable):
 # The order of seeds (pairwise) in which the matches are played
 matchorder = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
 
+# A sorted list of all teams in the top half of the bracket
+top = [1, 4, 5, 8, 9, 12, 13, 16]
+
+# A sorted list of all teams in the bottom half of the bracket.
+bottom = [2, 3, 6, 7, 10, 11, 14, 15]
+
 # The base file path
 path = dirname(dirname(realpath(__file__))) + "/"
 
-# Function which returns the default alpha file path.
-default_alpha_path = lambda: path + 'data/alpha/alpha_defaults.csv'
+# The file path for the men's data folder.
+men_path = path + 'data/men/'
 
-# Function which given a round, returns the alpha file path for that round.
-base_alpha_path = lambda rnd: path + 'data/alpha/alpha' + str(rnd.value) + '.csv'
+# the file path for the women's data folder.
+women_path = path + 'data/women/'
 
-# File paths to the matchup data for the four regions.
-data_files = [path + 'data/matchup/data_midwest.csv',
-            path + 'data/matchup/data_west.csv',
-            path + 'data/matchup/data_east.csv',
-            path + 'data/matchup/data_south.csv',
-]
-
-# File paths to the round appearance data for all 16 seeds.
-sample_base_path = path + 'data/sample/round'
+# File paths to the sample configuration file.
+sample_path = path + 'data/sample.toml'
