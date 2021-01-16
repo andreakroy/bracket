@@ -64,7 +64,7 @@ class Sample:
     def get_psum(self, qhat: float) -> float:
         return (1 - (1 - qhat)**(len(self.observed_counts)))
 
-    def sample_seed(self, qhat: float, max_val: int, fixed: int=None):
+    def sample_seed(self, qhat: float, max_val: int, fixed: int=None, support: list=list(range(1, 17))):
         # stage 1: adjustment sample
         if fixed:
             if random.random() < self.adjustments[fixed][1]:
@@ -76,8 +76,8 @@ class Sample:
         u = random.random() * psum
         sampled = int(ceil(log(u) / log(1 - qhat)))
         if max_val:
-            return min(max_val, sampled)
-        return sampled
+            return support[min(max_val, sampled) - 1]
+        return support[sampled - 1]
 
 class F4_A(Sample):
     '''
@@ -141,11 +141,12 @@ class E_8(Sample):
             q1 = self.get_qhat(top)
             q2 = self.get_qhat(bottom)
             fixed_seed = 1 # 0 is the index of 1 in TOP_SEEDS_SORTED; must add 1 to account for subtraction by 1
-            s1 = top[self.sample_seed(q1, 8, fixed_seed) - 1] # TODO: make this less janky
+            s1 = self.sample_seed(q1, 8, fixed_seed, top) # TODO: make this less janky
             fixed_seed = 11 # 5 is the index of 11 in BOTTOM_SEEDS_SORTED; must add 1 to account for subtraction by 1
-            bottom_idx = self.sample_seed(q2, 8, fixed_seed)
+            bottom_idx = self.sample_seed(q2, 8, fixed_seed, bottom)
+            #s2 = 
             s2 = bottom[bottom_idx - 1] if bottom_idx <= 8 else bottom_idx # TODO: comment
-            out.append([s1, s2])
+            out.append([s1, bottom_idx])
         return out
 
     def get_qhat(self, support: list): #TODO: we're calculating qhat values correctly
