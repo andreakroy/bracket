@@ -141,15 +141,13 @@ class E_8(Sample):
             q1 = self.get_qhat(top)
             q2 = self.get_qhat(bottom)
             fixed_seed = 1 # 0 is the index of 1 in TOP_SEEDS_SORTED; must add 1 to account for subtraction by 1
-            s1 = self.sample_seed(q1, 8, fixed_seed, top) # TODO: make this less janky
+            s1 = self.sample_seed(q1, 8, fixed_seed, top)
             fixed_seed = 11 # 5 is the index of 11 in BOTTOM_SEEDS_SORTED; must add 1 to account for subtraction by 1
-            bottom_idx = self.sample_seed(q2, 8, fixed_seed, bottom)
-            #s2 = 
-            s2 = bottom[bottom_idx - 1] if bottom_idx <= 8 else bottom_idx # TODO: comment
-            out.append([s1, bottom_idx])
+            s2 = self.sample_seed(q2, 8, fixed_seed, bottom)
+            out.append([s1, s2])
         return out
 
-    def get_qhat(self, support: list): #TODO: we're calculating qhat values correctly
+    def get_qhat(self, support: list): 
         # get the observed counts in the support.
         support_counts = {}
         for seed in support:
