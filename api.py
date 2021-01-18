@@ -30,3 +30,6 @@ def api():
             elif args['sfn'] == 'e8':
                 sfn = E_8()
         return Bracket(bt, sfn).to_json(), 200
+
+if __name__ == 'main':
+    app.run()
