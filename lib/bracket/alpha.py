@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
 import os, toml
 from .round import Rounds
 from .team import Team

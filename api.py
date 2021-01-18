@@ -1,57 +1,32 @@
-#!/home/bracketodds/Python-2.7.8/python
-# -*- coding: UTF-8 -*-
-
-import cgi
-from lib.bracket import BracketType
+from lib.bracket import Bracket, BracketType
 from lib.bracket.sample import F4_A, E_8
-from lib.database import generateJSON
+from lib.database import getBracket
 from lib.bracket.round import Rounds
 from lib.bracket.utils import *
+from flask import Flask, request
 
-f = E_8()
-print(f())
-print(generateJSON(sampling_fn=f))
-#print(f())
-seeds_top = {i : 0 for i in top}
-seeds_bottom = {i : 0 for i in bottom}
-for _ in range(10000):
-    for ls in f():
-        for l in ls:
-            if l in seeds_top:
-                seeds_top[l] += 1
-            if l in seeds_bottom:
-                seeds_bottom[l] += 1
+app = Flask(__name__)
 
-# print({i : seeds_top[i] for i in seeds_top})
-# print({i : seeds_bottom[i] for i in seeds_bottom})
-print({i : seeds_top[i] / sum(seeds_top.values()) for i in seeds_top})
-a = {i : seeds_bottom[i] / sum(seeds_bottom.values()) for i in seeds_bottom}
-print(a)
-print(sum(a.values()))
-#x = generateJSON(bracket_type=BracketType.MEN, sampling_fn=F4_A())
-#print(x)
-#print(generateJSON(samplingFunction=F4_A()))
-
-""" s = F4_A()
-seeds = {i : 0 for i in range(1, 17)}
-for _ in range(100000):
-    for ls in s():
-        for l in ls:
-            seeds[l] += 1
-
-num_seeds = sum(seeds.values())
-print({i : seeds[i] / num_seeds for i in seeds}) """
-
-""" x = generateJSON(samplingFunction=E_8())
-
-f = F4_A()
-
-check = { i: 0 for i in range(1, 17) }
-for _ in range(100000):
-    gen = f()
-    for lst in gen:
-        for val in lst:
-            check[val] += 1
-
-pmf_sim = { i : check[i] / sum(check.values()) for i in check}
-print(pmf_sim) """
+@app.route('/api/v1/', methods=['GET'])
+def api():
+    assert request.method == 'GET'
+    args = request.args
+    if 'uid' in args:
+        uid = args['uid']
+        return getBracket(uid)
+        # TODO: check if the uid is in the database. If so return it.
+    else:
+        # Setting the men's bracket as the default since most users choose this.
+        bt = BracketType.MEN
+        if 'type' in args:
+            try:
+                bt = BracketType(args['type'])
+            except:
+                return 'Invalid type parameter', 422
+        sfn = None        
+        if 'sfn' in args:
+            if args['sfn'] == 'f4a':
+                sfn = F4_A()
+            elif args['sfn'] == 'e8':
+                sfn = E_8()
+        return Bracket(bt, sfn).to_json(), 200

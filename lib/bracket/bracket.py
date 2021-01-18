@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
 from .sample import Sample
 from enum import Enum
 import json, os, random, toml
@@ -15,8 +12,8 @@ class BracketType(Enum):
     '''
     Enum to select the men's or women's bracket.
     '''
-    MEN = 0
-    WOMEN = 1
+    MEN = 'men'
+    WOMEN = 'women'
 
 class Bracket:
     '''
@@ -31,6 +28,7 @@ class Bracket:
         bracket_type (BracketType) : a BracketType enum value that selects the men's or women's bracket.
         sampling_fn (Sample) : a Sample object (i.e. F4_A or E_8).
         '''
+        self.bracket_type = bracket_type
         data_path = men_path if bracket_type == BracketType.MEN else women_path
         self.alpha = Alpha(data_path + 'alpha.toml')
         self.sample = sampling_fn() if sampling_fn else None
@@ -94,6 +92,7 @@ class Bracket:
         Returns a json serializeable dict representation of a Bracket.
         '''
         d = {
+            'type': self.bracket_type.value,
             'bitstring': self.bits(),
             'matches' : [match.to_json() for match in self.matches()],
             'sampled_seeds': self.sample,

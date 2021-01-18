@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
 from os.path import dirname, realpath
 
 # an iterator for pairwise iteration. 
