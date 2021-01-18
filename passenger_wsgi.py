@@ -1,1 +1,1 @@
-from api import api as application
+from app import generateJSON as application
