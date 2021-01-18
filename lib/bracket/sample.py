@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import random
 import numpy as np
 from .round import Rounds

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from .alpha import Alpha
 from .match import Match
 from .round import Rounds

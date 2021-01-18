@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from .alpha import *
 from .bracket import *
 from .match import *

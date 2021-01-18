@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import json, random
 from .round import Rounds
 from .team import Team

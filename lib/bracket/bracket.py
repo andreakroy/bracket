@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from .sample import Sample
 from enum import Enum
 import json, os, random, toml

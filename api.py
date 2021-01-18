@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from lib.bracket import Bracket, BracketType
 from lib.bracket.sample import F4_A, E_8
 from lib.database import getBracket

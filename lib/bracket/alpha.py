@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os, toml
 from .round import Rounds
 from .team import Team

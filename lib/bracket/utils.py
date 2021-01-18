@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from os.path import dirname, realpath
 
 # an iterator for pairwise iteration. 
